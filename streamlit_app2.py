@@ -28,38 +28,34 @@ if uploaded_file is not None:
         number_of_batches=('MATERIAL', 'count')
     ).reset_index()
     
-    # Base chart for sharing the X-axis and Y-axis scales
-    base = alt.Chart().encode(
-        x=alt.X(f'{interval_col}:O', axis=alt.Axis(title='Time Interval'))
+    # Line chart for overall average cycle time across all materials
+    line_chart = alt.Chart(overall_avg_data).mark_line(color='blue').encode(
+        x=alt.X('MONTH:O', title='Month of the Year'),
+        y=alt.Y('overall_average_cycle_time:Q', title='Overall Average Cycle Time (Days)'),
+        tooltip=['MONTH', 'overall_average_cycle_time']
+    ).properties(
+        title='Overall Monthly Average Cycle Time'
     )
 
-    # Creating the line chart for overall average cycle time
-    line = base.mark_line(color='red').encode(
-        y=alt.Y('Overall Average Cycle Time:Q', axis=alt.Axis(title='Cycle Time (days)'))
-    ).transform_filter(
-        (alt.datum['Overall Average Cycle Time'] != 0)
-    ).properties(
-        width=700,
-        height=400
-    ).data(overall_avg_data)
-
-    # Creating the circles for the material averages
-    circles = base.mark_circle().encode(
-        y=alt.Y('average_cycle_time:Q'),
-        size=alt.Size('number_of_batches:Q', title='Number of Batches', legend=alt.Legend(title="Batch Count")),
+    # Bubble chart for the number of batches per material at the average cycle time
+    bubbles = alt.Chart(material_avg_data).mark_circle().encode(
+        x='MONTH:O',
+        y='average_cycle_time:Q',
+        size='number_of_batches:Q',
         color='MATERIAL:N',
-        tooltip=['MATERIAL', 'average_cycle_time', 'number_of_batches']
+        tooltip=['MATERIAL', 'average_cycle_time', 'num_batches']
     ).properties(
-        width=700,
-        height=400
-    ).data(material_avg_data)
-    
-    # Combining the line and circle charts
-    combined_chart = alt.layer(line, circles).resolve_scale(
-        y='shared'
+        title='Number of Batches by Material Each Month'
     )
-    
-    st.altair_chart(combined_chart, use_container_width=True)
+
+    # Combine the line and bubble charts
+    combined_chart = alt.layer(line_chart, bubbles).resolve_scale(
+        y='shared'
+    ).properties(
+        width=600,
+        height=400
+    )
+
     
     # Material selector and boxplot for cycle time distribution
     selected_material = st.selectbox('Select Material:', data['MATERIAL'].unique())
