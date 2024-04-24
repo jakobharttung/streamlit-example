@@ -21,7 +21,7 @@ if uploaded_file is not None:
     time_group_options = ['Week', 'Month']
     selected_group = st.selectbox('Group the first chart by:', time_group_options)
 
-    # Filter data based on selected material
+    # Filter data based on selected material for the first chart
     filtered_data = data[data['MATERIAL'] == selected_material]
 
     # Determine grouping for the first chart
@@ -46,27 +46,26 @@ if uploaded_file is not None:
     st.altair_chart(boxplot, use_container_width=True)
 
     # Group by month for the second chart (line and bubble)
-    monthly_data1 = data.groupby(['MONTH']).agg(
+    monthly_average_data = data.groupby('MONTH').agg(
+        overall_average_cycle_time=('CYCLE TIME', 'mean')
+    ).reset_index()
+
+    monthly_material_data = data.groupby(['MONTH', 'MATERIAL']).agg(
         average_cycle_time=('CYCLE TIME', 'mean'),
         num_batches=('CYCLE TIME', 'count')
     ).reset_index()
 
-    monthly_data2 = data.groupby(['MONTH', 'MATERIAL']).agg(
-        average_cycle_time=('CYCLE TIME', 'mean'),
-        num_batches=('CYCLE TIME', 'count')
-    ).reset_index()
-
-    # Line chart for average cycle time across all materials
-    line_chart = alt.Chart(monthly_data1).mark_line(color='blue').encode(
+    # Line chart for overall average cycle time across all materials
+    line_chart = alt.Chart(monthly_average_data).mark_line(color='blue').encode(
         x=alt.X('MONTH:O', title='Month of the Year'),
-        y=alt.Y('average_cycle_time:Q', title='Average Cycle Time (Days)'),
-        tooltip=['MONTH', 'average_cycle_time']
+        y=alt.Y('overall_average_cycle_time:Q', title='Overall Average Cycle Time (Days)'),
+        tooltip=['MONTH', 'overall_average_cycle_time']
     ).properties(
-        title='Monthly Average Cycle Time Across Materials'
+        title='Overall Monthly Average Cycle Time'
     )
 
     # Bubble chart for the number of batches per material at the average cycle time
-    bubbles = alt.Chart(monthly_data2).mark_circle().encode(
+    bubbles = alt.Chart(monthly_material_data).mark_point().encode(
         x='MONTH:O',
         y='average_cycle_time:Q',
         size='num_batches:Q',
@@ -85,6 +84,5 @@ if uploaded_file is not None:
     )
 
     st.altair_chart(combined_chart, use_container_width=True)
-    st.write(monthly_data)
 else:
     st.write("Please upload an Excel file to proceed.")
