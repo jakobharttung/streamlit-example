@@ -28,27 +28,35 @@ if uploaded_file is not None:
         number_of_batches=('MATERIAL', 'count')
     ).reset_index()
     
+    # Base chart for sharing the X-axis and Y-axis scales
+    base = alt.Chart().encode(
+        x=alt.X(f'{interval_col}:O', axis=alt.Axis(title='Time Interval'))
+    )
+
     # Creating the line chart for overall average cycle time
-    line = alt.Chart(overall_avg_data).mark_line(color='red').encode(
-        x=alt.X(f'{interval_col}:O', axis=alt.Axis(title='Time Interval')),
-        y=alt.Y('Overall Average Cycle Time:Q', title='Cycle Time (days)')
-    )
-    
-    # Creating the circles for the material averages
-    circles = alt.Chart(material_avg_data).mark_circle().encode(
-        x=alt.X(f'{interval_col}:O'),
-        y=alt.Y('average_cycle_time:Q', title='Cycle Time (days)'),
-        size=alt.Size('number_of_batches:Q', title='Number of Batches'),
-        color='MATERIAL:N',
-        tooltip=['MATERIAL', 'average_cycle_time', 'number_of_batches']
-    )
-    
-    # Combining the line and circle charts
-    combined_chart = alt.layer(line, circles).resolve_scale(
-        y='independent'
+    line = base.mark_line(color='red').encode(
+        y=alt.Y('Overall Average Cycle Time:Q', axis=alt.Axis(title='Cycle Time (days)'))
+    ).transform_filter(
+        (alt.datum['Overall Average Cycle Time'] != 0)
     ).properties(
         width=700,
         height=400
+    ).data(overall_avg_data)
+
+    # Creating the circles for the material averages
+    circles = base.mark_circle().encode(
+        y=alt.Y('average_cycle_time:Q'),
+        size=alt.Size('number_of_batches:Q', title='Number of Batches', legend=alt.Legend(title="Batch Count")),
+        color='MATERIAL:N',
+        tooltip=['MATERIAL', 'average_cycle_time', 'number_of_batches']
+    ).properties(
+        width=700,
+        height=400
+    ).data(material_avg_data)
+    
+    # Combining the line and circle charts
+    combined_chart = alt.layer(line, circles).resolve_scale(
+        y='shared'
     )
     
     st.altair_chart(combined_chart, use_container_width=True)
