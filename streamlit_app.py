@@ -80,5 +80,6 @@ if uploaded_file is not None:
     )
 
     st.altair_chart(combined_chart, use_container_width=True)
+    st.write(monthly_data)
 else:
     st.write("Please upload an Excel file to proceed.")
