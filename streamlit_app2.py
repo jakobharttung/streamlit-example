@@ -5,8 +5,9 @@ import pandas as pd
 def load_data(uploaded_file):
     data = pd.read_excel(uploaded_file)
     data['END TIME'] = pd.to_datetime(data['END TIME'])
-    data['MONTH_YEAR'] = data['END TIME'].dt.to_period('M')
-    data['WEEK_YEAR'] = data['END TIME'].dt.strftime('%Y - W%V')
+    # Creating period columns for aggregation
+    data['MONTH_YEAR'] = data['END TIME'].dt.to_period('M').astype(str)  # Convert to string for display
+    data['WEEK_YEAR'] = data['END TIME'].dt.strftime('%Y - W%V')  # Already string
     return data
 
 st.title("Manufacturing Batch Cycle Times Analysis")
@@ -27,23 +28,25 @@ if uploaded_file is not None:
         number_of_batches=('MATERIAL', 'count')
     ).reset_index()
     
-    # Combined chart
-    base = alt.Chart(material_avg_data).encode(
-        alt.X(f'{interval_col}:O', axis=alt.Axis(title='Time Interval'))
-    )
-    
+    # Creating the line chart for overall average cycle time
     line = alt.Chart(overall_avg_data).mark_line(color='red').encode(
+        x=alt.X(f'{interval_col}:O', axis=alt.Axis(title='Time Interval')),
         y=alt.Y('Overall Average Cycle Time:Q', axis=alt.Axis(title='Cycle Time (days)'))
     )
     
-    points = base.mark_point().encode(
+    # Creating the points for the material averages
+    points = alt.Chart(material_avg_data).mark_point().encode(
+        x=alt.X(f'{interval_col}:O', axis=alt.Axis(title='Time Interval')),
         y=alt.Y('average_cycle_time:Q'),
         size='number_of_batches:Q',
         color='MATERIAL:N',
         tooltip=['MATERIAL', 'average_cycle_time', 'number_of_batches']
     )
     
-    combined_chart = alt.layer(line, points).properties(
+    # Combining the line and point charts
+    combined_chart = alt.layer(line, points).resolve_scale(
+        y='independent'
+    ).properties(
         width=700,
         height=400
     )
@@ -64,4 +67,3 @@ if uploaded_file is not None:
     )
     
     st.altair_chart(boxplot, use_container_width=True)
-    st.write(overall_avg_data)
