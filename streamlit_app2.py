@@ -64,3 +64,4 @@ if uploaded_file is not None:
     )
     
     st.altair_chart(boxplot, use_container_width=True)
+    st.write(overall_avg_data)
