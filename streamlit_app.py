@@ -1,40 +1,43 @@
-import altair as alt
-import numpy as np
-import pandas as pd
 import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-"""
-# Welcome to Streamlit!
+# Streamlit app
+st.title('Material Cycle Time Analysis')
 
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:.
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
+# File uploader
+uploaded_file = st.file_uploader("Choose an Excel file", type=['xlsx'])
+if uploaded_file is not None:
+    data = pd.read_excel(uploaded_file)
+    data['END TIME'] = pd.to_datetime(data['END TIME'])  # ensure END TIME is datetime format
 
-In the meantime, below is an example of what you can do with just a few lines of code:
-"""
+    # Material selection
+    material_list = data['MATERIAL'].unique()
+    selected_material = st.selectbox('Select a material:', material_list)
 
-num_points = st.slider("Number of points in spiral", 1, 10000, 1100)
-num_turns = st.slider("Number of turns in spiral", 1, 300, 31)
+    # Grouping selection
+    group_by_options = ['Week', 'Month']
+    group_by = st.selectbox('Group by:', group_by_options)
 
-indices = np.linspace(0, 1, num_points)
-theta = 2 * np.pi * num_turns * indices
-radius = indices
+    # Filter data based on selected material
+    filtered_data = data[data['MATERIAL'] == selected_material]
 
-x = radius * np.cos(theta)
-y = radius * np.sin(theta)
+    # Process data for boxplot
+    if group_by == 'Week':
+        filtered_data['TIME GROUP'] = filtered_data['END TIME'].dt.isocalendar().week
+        time_label = 'Week of the Year'
+    elif group_by == 'Month':
+        filtered_data['TIME GROUP'] = filtered_data['END TIME'].dt.month
+        time_label = 'Month of the Year'
 
-df = pd.DataFrame({
-    "x": x,
-    "y": y,
-    "idx": indices,
-    "rand": np.random.randn(num_points),
-})
-
-st.altair_chart(alt.Chart(df, height=700, width=700)
-    .mark_point(filled=True)
-    .encode(
-        x=alt.X("x", axis=None),
-        y=alt.Y("y", axis=None),
-        color=alt.Color("idx", legend=None, scale=alt.Scale()),
-        size=alt.Size("rand", legend=None, scale=alt.Scale(range=[1, 150])),
-    ))
+    # Plotting
+    fig, ax = plt.subplots()
+    sns.boxplot(x='TIME GROUP', y='CYCLE TIME', data=filtered_data, ax=ax)
+    ax.set_title(f'Cycle Time Distribution by {group_by} for {selected_material}')
+    ax.set_xlabel(time_label)
+    ax.set_ylabel('Cycle Time (Days)')
+    plt.xticks(rotation=45)
+    st.pyplot(fig)
+else:
+    st.write("Please upload an Excel file to proceed.")
