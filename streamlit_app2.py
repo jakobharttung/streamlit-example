@@ -3,27 +3,25 @@ import altair as alt
 import pandas as pd
 
 def load_data(uploaded_file):
-    # Load the Excel file
     data = pd.read_excel(uploaded_file)
-    # Ensure columns are correctly named as per your Excel file, assuming all uppercase
+    # Convert 'END TIME' to datetime and create interval columns
     data['END TIME'] = pd.to_datetime(data['END TIME'])
-    # Create period columns for aggregation
-    data['MONTH_YEAR'] = data['END TIME'].dt.to_period('M')
+    data['MONTH_YEAR'] = data['END TIME'].dt.to_period('M').astype(str)
     data['WEEK_YEAR'] = data['END TIME'].dt.strftime('%Y - W%V')
     return data
 
-st.title("Batch Cycle Times Analysis")
+st.title("Manufacturing Batch Cycle Times Analysis")
 
 # File uploader
 uploaded_file = st.file_uploader("Upload your Excel file", type='xlsx')
 if uploaded_file is not None:
     data = load_data(uploaded_file)
     
-    # Interval selection
+    # Toggle for selecting time interval
     interval = st.radio("Choose the analysis interval:", ('Weekly', 'Monthly'))
     interval_col = 'MONTH_YEAR' if interval == 'Monthly' else 'WEEK_YEAR'
     
-    # Aggregate data for overall and per material
+    # Aggregate data for overall average and per material average
     overall_avg_data = data.groupby(interval_col)['CYCLE TIME'].mean().reset_index().rename(columns={'CYCLE TIME': 'Overall Average'})
     material_avg_data = data.groupby(['MATERIAL', interval_col]).agg(
         Average_Cycle_Time=('CYCLE TIME', 'mean'),
@@ -55,7 +53,7 @@ if uploaded_file is not None:
     
     st.altair_chart(combined_chart, use_container_width=True)
 
-    # Selector for materials and boxplot for cycle time distribution
+    # Material selector and boxplot for cycle time distribution
     selected_material = st.selectbox('Select a material:', data['MATERIAL'].unique())
     material_data = data[data['MATERIAL'] == selected_material]
     boxplot = alt.Chart(material_data).mark_boxplot().encode(
