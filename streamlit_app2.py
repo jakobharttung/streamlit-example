@@ -55,6 +55,7 @@ if uploaded_file is not None:
         width=600,
         height=400
     )
+    st.altair_chart(combined_chart, use_container_width=True)
 
     
     # Material selector and boxplot for cycle time distribution
