@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
+import altair as alt
 
 # Streamlit app
 st.title('Material Cycle Time Analysis')
@@ -31,13 +30,16 @@ if uploaded_file is not None:
         filtered_data['TIME GROUP'] = filtered_data['END TIME'].dt.month
         time_label = 'Month of the Year'
 
-    # Plotting
-    fig, ax = plt.subplots()
-    sns.boxplot(x='TIME GROUP', y='CYCLE TIME', data=filtered_data, ax=ax)
-    ax.set_title(f'Cycle Time Distribution by {group_by} for {selected_material}')
-    ax.set_xlabel(time_label)
-    ax.set_ylabel('Cycle Time (Days)')
-    plt.xticks(rotation=45)
-    st.pyplot(fig)
+    # Prepare the Altair chart
+    chart = alt.Chart(filtered_data).mark_boxplot().encode(
+        x=alt.X('TIME GROUP:O', title=time_label),
+        y=alt.Y('CYCLE TIME:Q', title='Cycle Time (Days)'),
+        tooltip=['CYCLE TIME', 'TIME GROUP']
+    ).properties(
+        width=600,
+        height=400
+    ).interactive()
+
+    st.altair_chart(chart, use_container_width=True)
 else:
     st.write("Please upload an Excel file to proceed.")
