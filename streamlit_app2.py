@@ -27,8 +27,8 @@ if uploaded_file is not None:
         number_of_batches=('START BATCH CODE', 'count')
     ).reset_index()
 
-    overall_avg = summary.groupby(interval_col).agg(
-        overall_avg_cycle_time=('average_cycle_time', 'mean')
+    overall_avg = data.groupby(interval_col).agg(
+        overall_avg_cycle_time=('CYCLE TIME', 'mean')
     ).reset_index()
 
     # Combined Chart: Line for Overall Average, Points for Each Material
@@ -37,7 +37,7 @@ if uploaded_file is not None:
         y=alt.Y('overall_avg_cycle_time:Q', title='Overall Average Cycle Time (days)')
     )
 
-    points = alt.Chart(summary).mark_point().encode(
+    points = alt.Chart(summary).mark_circle().encode(
         x=alt.X(f'{interval_col}:O', title='Time Interval'),
         y=alt.Y('average_cycle_time:Q'),
         size=alt.Size('number_of_batches:Q', title='Number of Batches'),
