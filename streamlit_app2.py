@@ -3,65 +3,63 @@ import altair as alt
 import pandas as pd
 
 def load_data(uploaded_file):
+    # Load the Excel file
     data = pd.read_excel(uploaded_file)
-    data['END TIME'] = pd.to_datetime(data['END TIME'])
-    # Create month and week period columns for aggregation
-    data['MONTH_YEAR'] = data['END TIME'].dt.to_period('M').astype(str)  # Convert to string for display
-    data['WEEK_YEAR'] = data['END TIME'].dt.strftime('%Y - W%V')  # Already string
+    data['End Time'] = pd.to_datetime(data['End Time'])
+    # Create period columns for aggregation
+    data['Month_Year'] = data['End Time'].dt.to_period('M')
+    data['Week_Year'] = data['End Time'].dt.strftime('%Y - W%V')
     return data
 
-st.title("Manufacturing Batch Cycle Times Analysis")
+st.title("Batch Cycle Times Analysis")
 
-uploaded_file = st.file_uploader("Choose an Excel file", type='xlsx')
+# File uploader
+uploaded_file = st.file_uploader("Upload your Excel file", type='xlsx')
 if uploaded_file is not None:
     data = load_data(uploaded_file)
-    interval = st.radio("Select Time Interval:", ('Weekly', 'Monthly'))
-    interval_col = 'MONTH_YEAR' if interval == 'Monthly' else 'WEEK_YEAR'
     
-    # Compute overall and per material average cycle times
-    overall_avg_data = data.groupby(interval_col)['CYCLE TIME'].mean().reset_index()
-    overall_avg_data = overall_avg_data.rename(columns={'CYCLE TIME': 'Overall Average Cycle Time'})
+    # Interval selection
+    interval = st.radio("Choose the analysis interval:", ('Weekly', 'Monthly'))
+    interval_col = 'Month_Year' if interval == 'Monthly' else 'Week_Year'
     
-    material_avg_data = data.groupby(['MATERIAL', interval_col]).agg(
-        average_cycle_time=('CYCLE TIME', 'mean'),
-        number_of_batches=('MATERIAL', 'count')
+    # Aggregate data for overall and per material
+    overall_avg_data = data.groupby(interval_col)['Cycle Time'].mean().reset_index().rename(columns={'Cycle Time': 'Overall Average'})
+    material_avg_data = data.groupby(['Material', interval_col]).agg(
+        Average_Cycle_Time=('Cycle Time', 'mean'),
+        Number_of_Batches=('Material', 'size')
     ).reset_index()
-    
-    # Define the base encoding for shared axis settings
-    base = alt.Chart().encode(
-        x=alt.X(f'{interval_col}:O', title='Time Interval')
-    )
 
     # Line chart for overall average cycle time
     line = alt.Chart(overall_avg_data).mark_line(color='red').encode(
-        y=alt.Y('Overall Average Cycle Time:Q', title='Cycle Time (days)', scale=alt.Scale(zero=False))
+        x=alt.X(interval_col, title='Time Interval'),
+        y=alt.Y('Overall Average', title='Average Cycle Time (days)')
     )
 
-    # Circle chart for material-specific average cycle times
+    # Circle chart for material-specific averages
     circles = alt.Chart(material_avg_data).mark_circle().encode(
-        y=alt.Y('average_cycle_time:Q', title='Cycle Time (days)', scale=alt.Scale(zero=False)),
-        size=alt.Size('number_of_batches:Q', title='Number of Batches'),
-        color='MATERIAL:N',
-        tooltip=['MATERIAL', 'average_cycle_time', 'number_of_batches']
+        x=alt.X(interval_col, title='Time Interval'),
+        y=alt.Y('Average_Cycle_Time', title='Average Cycle Time (days)'),
+        size='Number_of_Batches',
+        color='Material',
+        tooltip=['Material', 'Average_Cycle_Time', 'Number_of_Batches']
     )
 
     # Combine charts with shared y-axis
-    combined_chart = (line + circles).resolve_scale(
+    combined_chart = alt.layer(line, circles).resolve_scale(
         y='shared'
     ).properties(
         width=700,
         height=400
     )
-
+    
     st.altair_chart(combined_chart, use_container_width=True)
-    
-    # Material selector and boxplot for cycle time distribution
-    selected_material = st.selectbox('Select Material:', data['MATERIAL'].unique())
-    material_data = data[data['MATERIAL'] == selected_material]
-    
+
+    # Selector for materials and boxplot for cycle time distribution
+    selected_material = st.selectbox('Select a material:', data['Material'].unique())
+    material_data = data[data['Material'] == selected_material]
     boxplot = alt.Chart(material_data).mark_boxplot().encode(
-        x=alt.X(f'{interval_col}:O', title='Time Interval'),
-        y=alt.Y('CYCLE TIME:Q', title='Cycle Time (days)')
+        x=alt.X(interval_col, title='Time Interval'),
+        y=alt.Y('Cycle Time', title='Cycle Time (days)')
     ).properties(
         title=f'Cycle Time Distribution for {selected_material}',
         width=700,
