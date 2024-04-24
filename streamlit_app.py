@@ -33,23 +33,23 @@ if uploaded_file is not None:
     st.altair_chart(boxplot, use_container_width=True)
 
     # Group by week for the line and bubble chart
-    weekly_data = data.groupby(['WEEK', 'MATERIAL']).agg(
+    monthly_data = data.groupby(['MONTH', 'MATERIAL']).agg(
         average_cycle_time=('CYCLE TIME', 'mean'),
         num_batches=('CYCLE TIME', 'count')
     ).reset_index()
 
     # Line chart for average cycle time across all materials
-    line_chart = alt.Chart(weekly_data).mark_line(color='blue').encode(
-        x=alt.X('WEEK:O', title='Week of the Year'),
+    line_chart = alt.Chart(monthly_data).mark_line(color='blue').encode(
+        x=alt.X('MONTH:O', title='Month of the Year'),
         y=alt.Y('average_cycle_time:Q', title='Average Cycle Time (Days)'),
-        tooltip=['WEEK', 'average_cycle_time']
+        tooltip=['MONTH', 'average_cycle_time']
     ).properties(
-        title='Weekly Average Cycle Time Across Materials'
+        title='Monthly Average Cycle Time Across Materials'
     )
 
     # Bubble chart for the number of batches per material at the average cycle time
-    bubbles = alt.Chart(weekly_data).mark_point().encode(
-        x='WEEK:O',
+    bubbles = alt.Chart(monthly_data).mark_point().encode(
+        x='MONTH:O',
         y='average_cycle_time:Q',
         size='num_batches:Q',
         color='MATERIAL:N',
