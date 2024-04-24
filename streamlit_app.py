@@ -77,7 +77,7 @@ if uploaded_file is not None:
     )
 
     # Combine the line and bubble charts
-    combined_chart = alt.layer(line_chart).resolve_scale(
+    combined_chart = alt.layer(line_chart, bubbles).resolve_scale(
         y='shared'
     ).properties(
         width=600,
