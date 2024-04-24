@@ -31,13 +31,13 @@ if uploaded_file is not None:
     # Creating the line chart for overall average cycle time
     line = alt.Chart(overall_avg_data).mark_line(color='red').encode(
         x=alt.X(f'{interval_col}:O', axis=alt.Axis(title='Time Interval')),
-        y=alt.Y('Overall Average Cycle Time:Q', axis=alt.Axis(title='Cycle Time (days)', scale=alt.Scale(zero=False)))
+        y=alt.Y('Overall Average Cycle Time:Q', title='Cycle Time (days)')
     )
     
     # Creating the circles for the material averages
     circles = alt.Chart(material_avg_data).mark_circle().encode(
-        x=alt.X(f'{interval_col}:O', axis=alt.Axis(title='Time Interval')),
-        y=alt.Y('average_cycle_time:Q', axis=alt.Axis(title='Cycle Time (days)', scale=alt.Scale(zero=False))),
+        x=alt.X(f'{interval_col}:O'),
+        y=alt.Y('average_cycle_time:Q', title='Cycle Time (days)'),
         size=alt.Size('number_of_batches:Q', title='Number of Batches'),
         color='MATERIAL:N',
         tooltip=['MATERIAL', 'average_cycle_time', 'number_of_batches']
@@ -45,7 +45,7 @@ if uploaded_file is not None:
     
     # Combining the line and circle charts
     combined_chart = alt.layer(line, circles).resolve_scale(
-        y='shared'
+        y='independent'
     ).properties(
         width=700,
         height=400
