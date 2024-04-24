@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import seaborn as sns
 
 # Streamlit app
 st.title('Material Cycle Time Analysis')
