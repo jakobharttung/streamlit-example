@@ -5,10 +5,11 @@ import pandas as pd
 def load_data(uploaded_file):
     # Load the Excel file
     data = pd.read_excel(uploaded_file)
-    data['End Time'] = pd.to_datetime(data['End Time'])
+    # Ensure columns are correctly named as per your Excel file, assuming all uppercase
+    data['END TIME'] = pd.to_datetime(data['END TIME'])
     # Create period columns for aggregation
-    data['Month_Year'] = data['End Time'].dt.to_period('M')
-    data['Week_Year'] = data['End Time'].dt.strftime('%Y - W%V')
+    data['MONTH_YEAR'] = data['END TIME'].dt.to_period('M')
+    data['WEEK_YEAR'] = data['END TIME'].dt.strftime('%Y - W%V')
     return data
 
 st.title("Batch Cycle Times Analysis")
@@ -20,13 +21,13 @@ if uploaded_file is not None:
     
     # Interval selection
     interval = st.radio("Choose the analysis interval:", ('Weekly', 'Monthly'))
-    interval_col = 'Month_Year' if interval == 'Monthly' else 'Week_Year'
+    interval_col = 'MONTH_YEAR' if interval == 'Monthly' else 'WEEK_YEAR'
     
     # Aggregate data for overall and per material
-    overall_avg_data = data.groupby(interval_col)['Cycle Time'].mean().reset_index().rename(columns={'Cycle Time': 'Overall Average'})
-    material_avg_data = data.groupby(['Material', interval_col]).agg(
-        Average_Cycle_Time=('Cycle Time', 'mean'),
-        Number_of_Batches=('Material', 'size')
+    overall_avg_data = data.groupby(interval_col)['CYCLE TIME'].mean().reset_index().rename(columns={'CYCLE TIME': 'Overall Average'})
+    material_avg_data = data.groupby(['MATERIAL', interval_col]).agg(
+        Average_Cycle_Time=('CYCLE TIME', 'mean'),
+        Number_of_Batches=('MATERIAL', 'size')
     ).reset_index()
 
     # Line chart for overall average cycle time
@@ -40,8 +41,8 @@ if uploaded_file is not None:
         x=alt.X(interval_col, title='Time Interval'),
         y=alt.Y('Average_Cycle_Time', title='Average Cycle Time (days)'),
         size='Number_of_Batches',
-        color='Material',
-        tooltip=['Material', 'Average_Cycle_Time', 'Number_of_Batches']
+        color='MATERIAL',
+        tooltip=['MATERIAL', 'Average_Cycle_Time', 'Number_of_Batches']
     )
 
     # Combine charts with shared y-axis
@@ -55,11 +56,11 @@ if uploaded_file is not None:
     st.altair_chart(combined_chart, use_container_width=True)
 
     # Selector for materials and boxplot for cycle time distribution
-    selected_material = st.selectbox('Select a material:', data['Material'].unique())
-    material_data = data[data['Material'] == selected_material]
+    selected_material = st.selectbox('Select a material:', data['MATERIAL'].unique())
+    material_data = data[data['MATERIAL'] == selected_material]
     boxplot = alt.Chart(material_data).mark_boxplot().encode(
         x=alt.X(interval_col, title='Time Interval'),
-        y=alt.Y('Cycle Time', title='Cycle Time (days)')
+        y=alt.Y('CYCLE TIME', title='Cycle Time (days)')
     ).properties(
         title=f'Cycle Time Distribution for {selected_material}',
         width=700,
