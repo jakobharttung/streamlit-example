@@ -65,7 +65,7 @@ if uploaded_file is not None:
     )
 
     # Bubble chart for the number of batches per material at the average cycle time
-    bubbles = alt.Chart(monthly_material_data).mark_point().encode(
+    bubbles = alt.Chart(monthly_material_data).mark_circle().encode(
         x='MONTH:O',
         y='average_cycle_time:Q',
         size='num_batches:Q',
