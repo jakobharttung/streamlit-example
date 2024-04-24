@@ -46,13 +46,18 @@ if uploaded_file is not None:
     st.altair_chart(boxplot, use_container_width=True)
 
     # Group by month for the second chart (line and bubble)
-    monthly_data = data.groupby(['MONTH', 'MATERIAL']).agg(
+    monthly_data1 = data.groupby(['MONTH']).agg(
+        average_cycle_time=('CYCLE TIME', 'mean'),
+        num_batches=('CYCLE TIME', 'count')
+    ).reset_index()
+
+    monthly_data2 = data.groupby(['MONTH', 'MATERIAL']).agg(
         average_cycle_time=('CYCLE TIME', 'mean'),
         num_batches=('CYCLE TIME', 'count')
     ).reset_index()
 
     # Line chart for average cycle time across all materials
-    line_chart = alt.Chart(monthly_data).mark_line(color='blue').encode(
+    line_chart = alt.Chart(monthly_data1).mark_line(color='blue').encode(
         x=alt.X('MONTH:O', title='Month of the Year'),
         y=alt.Y('average_cycle_time:Q', title='Average Cycle Time (Days)'),
         tooltip=['MONTH', 'average_cycle_time']
@@ -61,7 +66,7 @@ if uploaded_file is not None:
     )
 
     # Bubble chart for the number of batches per material at the average cycle time
-    bubbles = alt.Chart(monthly_data).mark_circle().encode(
+    bubbles = alt.Chart(monthly_data2).mark_circle().encode(
         x='MONTH:O',
         y='average_cycle_time:Q',
         size='num_batches:Q',
