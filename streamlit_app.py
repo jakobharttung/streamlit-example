@@ -11,28 +11,41 @@ if uploaded_file is not None:
     data = pd.read_excel(uploaded_file)
     data['END TIME'] = pd.to_datetime(data['END TIME'])  # ensure END TIME is datetime format
     data['WEEK'] = data['END TIME'].dt.isocalendar().week  # add week column for grouping
+    data['MONTH'] = data['END TIME'].dt.month  # add month column for grouping
 
     # Material selection
     material_list = data['MATERIAL'].unique()
     selected_material = st.selectbox('Select a material:', material_list)
 
+    # Grouping selection for the first chart
+    time_group_options = ['Week', 'Month']
+    selected_group = st.selectbox('Group the first chart by:', time_group_options)
+
     # Filter data based on selected material
     filtered_data = data[data['MATERIAL'] == selected_material]
 
-    # Boxplot visualization
+    # Determine grouping for the first chart
+    if selected_group == 'Week':
+        group_field = 'WEEK'
+        time_label = 'Week of the Year'
+    else:
+        group_field = 'MONTH'
+        time_label = 'Month of the Year'
+
+    # Boxplot visualization for the first chart
     boxplot = alt.Chart(filtered_data).mark_boxplot().encode(
-        x=alt.X('WEEK:O', title='Week of the Year'),
+        x=alt.X(f'{group_field}:O', title=time_label),
         y=alt.Y('CYCLE TIME:Q', title='Cycle Time (Days)'),
-        tooltip=['CYCLE TIME', 'WEEK']
+        tooltip=['CYCLE TIME', f'{group_field}']
     ).properties(
         width=600,
         height=400,
-        title='Cycle Time Distribution by Week'
+        title=f'Cycle Time Distribution by {time_label}'
     ).interactive()
 
     st.altair_chart(boxplot, use_container_width=True)
 
-    # Group by week for the line and bubble chart
+    # Group by month for the second chart (line and bubble)
     monthly_data = data.groupby(['MONTH', 'MATERIAL']).agg(
         average_cycle_time=('CYCLE TIME', 'mean'),
         num_batches=('CYCLE TIME', 'count')
@@ -55,7 +68,7 @@ if uploaded_file is not None:
         color='MATERIAL:N',
         tooltip=['MATERIAL', 'average_cycle_time', 'num_batches']
     ).properties(
-        title='Number of Batches by Material Each Week'
+        title='Number of Batches by Material Each Month'
     )
 
     # Combine the line and bubble charts
