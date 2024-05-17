@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
-from vega_datasets import data
 
 # Function to preprocess the data
 def preprocess_data(uploaded_file):
