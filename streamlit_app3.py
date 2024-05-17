@@ -27,7 +27,7 @@ def generate_plot(df, interval):
     points = alt.Chart(material_avg).mark_circle().encode(
         x=alt.X('Interval:O', axis=alt.Axis(title='Interval')),
         y=alt.Y('CYCLE TIME:Q', axis=alt.Axis(title='Average Cycle Time (days)')),
-        size=alt.Size('Batch Count:Q', title='Number of Batches'),
+        size=alt.Size('material_count:Q', title='Number of Batches'),
         color=alt.Color('MATERIAL:N', legend=alt.Legend(title="Material"))
     )
     
