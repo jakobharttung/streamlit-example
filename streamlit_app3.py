@@ -3,13 +3,16 @@ import pandas as pd
 import altair as alt
 
 # Function to preprocess the data
-def preprocess_data(uploaded_file):
+def preprocess_data(uploaded_file, interval):
     # Read the Excel file
     df = pd.read_excel(uploaded_file, engine='openpyxl')
     # Convert 'END TIME' to datetime
     df['END TIME'] = pd.to_datetime(df['END TIME'])
     # Create a column for the interval based on the 'END TIME'
-    df['Interval'] = df['END TIME'].dt.to_period('M') if interval == 'Monthly' else df['END TIME'].dt.to_period('W')
+    if interval == 'Monthly':
+        df['Interval'] = df['END TIME'].dt.strftime('%Y-%m')
+    else:
+        df['Interval'] = df['END TIME'].dt.strftime('%Y-%U')
     return df
 
 # Function to generate the plot
@@ -43,7 +46,7 @@ if uploaded_file:
     # Toggle for time intervals
     interval = st.radio("Select Time Interval", ('Monthly', 'Weekly'))
     
-    df = preprocess_data(uploaded_file)
+    df = preprocess_data(uploaded_file, interval)
     
     # Generate and display the plot
     plot = generate_plot(df, interval)
