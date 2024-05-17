@@ -22,7 +22,7 @@ def prepare_data_for_plot(df, interval):
         df['Interval'] = df.index.to_period('M')
     else:
         df['Interval'] = df.index.to_period('W')
-    overall_avg = df['DURATION'].mean()
+    overall_avg = df['CYCLE TIME'].mean()
     material_avg = df.groupby(['MATERIAL', 'Interval'])['CYCLE TIME'].mean().reset_index()
     material_count = df.groupby(['MATERIAL', 'Interval']).size().reset_index(name='Counts')
     return overall_avg, material_avg, material_count
