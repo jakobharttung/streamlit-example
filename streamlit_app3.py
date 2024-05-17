@@ -6,42 +6,33 @@ import altair as alt
 def preprocess_data(uploaded_file):
     # Read the Excel file
     df = pd.read_excel(uploaded_file, engine='openpyxl')
-    # Convert 'END TIME' to datetime and extract the month and week
+    # Convert 'END TIME' to datetime
     df['END TIME'] = pd.to_datetime(df['END TIME'])
-    df['Month'] = df['END TIME'].dt.to_period('M')
-    df['Week'] = df['END TIME'].dt.to_period('W')
+    # Create a column for the interval based on the 'END TIME'
+    df['Interval'] = df['END TIME'].dt.to_period('M') if interval == 'Monthly' else df['END TIME'].dt.to_period('W')
     return df
 
 # Function to generate the plot
 def generate_plot(df, interval):
-    # Group by the selected interval and calculate the average cycle time
-    if interval == 'Monthly':
-        group = df.groupby(['MATERIAL', 'Month'])
-        interval_col = 'Month'
-    else:
-        group = df.groupby(['MATERIAL', 'Week'])
-        interval_col = 'Week'
+    # Calculate the average cycle time for each material and overall
+    material_avg = df.groupby(['MATERIAL', 'Interval'])['CYCLE TIME'].mean().reset_index()
+    overall_avg = df.groupby('Interval')['CYCLE TIME'].mean().reset_index()
     
-    material_avg = group['CYCLE TIME'].mean().reset_index()
-    material_count = group.size().reset_index(name='Counts')
-    
-    # Line chart for average cycle time per interval
-    interval_avg = group['CYCLE TIME'].mean().reset_index(name='Avg Cycle Time')
-    
-    line = alt.Chart(interval_avg).mark_line(color='red').encode(
-        x=alt.X(f'{interval_col}:O', axis=alt.Axis(title=interval)),
-        y=alt.Y('Avg Cycle Time:Q', axis=alt.Axis(title='Average Cycle Time (days)'))
-    )
-    
-    # Circle chart for each material
+    # Create the base chart for material averages
     points = alt.Chart(material_avg).mark_circle().encode(
-        x=alt.X(f'{interval_col}:O', axis=alt.Axis(title=interval)),
-        y=alt.Y('CYCLE TIME:Q', axis=alt.Axis(title='Material Average Cycle Time (days)')),
-        size=alt.Size('Counts:Q', title='Number of Batches'),
+        x=alt.X('Interval:O', axis=alt.Axis(title='Interval')),
+        y=alt.Y('CYCLE TIME:Q', axis=alt.Axis(title='Average Cycle Time (days)')),
+        size=alt.Size('count()', title='Number of Batches'),
         color=alt.Color('MATERIAL:N', legend=alt.Legend(title="Material"))
     )
     
-    return (line + points).resolve_scale(y='independent')
+    # Create the line chart for overall averages
+    line = alt.Chart(overall_avg).mark_line(color='red').encode(
+        x=alt.X('Interval:O', axis=alt.Axis(title='Interval')),
+        y=alt.Y('CYCLE TIME:Q', axis=alt.Axis(title='Overall Average Cycle Time (days)'))
+    )
+    
+    return (points + line).resolve_scale(y='independent')
 
 # Streamlit app
 st.title('Manufacturing Batch Cycle Time Analysis')
@@ -49,10 +40,10 @@ st.title('Manufacturing Batch Cycle Time Analysis')
 # File uploader
 uploaded_file = st.file_uploader("Upload an Excel file", type='xlsx')
 if uploaded_file:
-    df = preprocess_data(uploaded_file)
-    
     # Toggle for time intervals
     interval = st.radio("Select Time Interval", ('Monthly', 'Weekly'))
+    
+    df = preprocess_data(uploaded_file)
     
     # Generate and display the plot
     plot = generate_plot(df, interval)
@@ -66,7 +57,7 @@ if uploaded_file:
     
     # Boxplot for the selected material
     boxplot = alt.Chart(material_df).mark_boxplot().encode(
-        x=alt.X(f'{interval}:O', axis=alt.Axis(title=interval)),
+        x=alt.X('Interval:O', axis=alt.Axis(title='Interval')),
         y=alt.Y('CYCLE TIME:Q', axis=alt.Axis(title='Cycle Time (days)'))
     )
     st.altair_chart(boxplot, use_container_width=True)
