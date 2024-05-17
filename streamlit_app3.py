@@ -18,30 +18,29 @@ def generate_plot(df, interval):
     # Group by the selected interval and calculate the average cycle time
     if interval == 'Monthly':
         group = df.groupby(['MATERIAL', 'Month'])
+        interval_col = 'Month'
     else:
         group = df.groupby(['MATERIAL', 'Week'])
+        interval_col = 'Week'
     
     material_avg = group['CYCLE TIME'].mean().reset_index()
     overall_avg = df['CYCLE TIME'].mean()
     
-    # Create the base chart
-    base = alt.Chart(material_avg).encode(
-        x=alt.X(f'{interval}:O', axis=alt.Axis(title=interval)),
-        y=alt.Y('CYCLE TIME:Q', axis=alt.Axis(title='Average Cycle Time (days)'))
-    )
-    
     # Line chart for overall average cycle time
-    line = alt.Chart(pd.DataFrame({'CYCLE TIME': [overall_avg]})).mark_line(color='red').encode(
-        y='CYCLE TIME:Q'
+    line = alt.Chart(pd.DataFrame({interval_col: material_avg[interval_col].unique(), 'CYCLE TIME': [overall_avg]*len(material_avg[interval_col].unique())})).mark_line(color='red').encode(
+        x=alt.X(f'{interval_col}:O', axis=alt.Axis(title=interval)),
+        y=alt.Y('CYCLE TIME:Q', axis=alt.Axis(title='Overall Average Cycle Time (days)'))
     )
     
     # Circle chart for each material
-    points = base.mark_circle().encode(
+    points = alt.Chart(material_avg).mark_circle().encode(
+        x=alt.X(f'{interval_col}:O', axis=alt.Axis(title=interval)),
+        y=alt.Y('CYCLE TIME:Q', axis=alt.Axis(title='Material Average Cycle Time (days)')),
         size=alt.Size('count()', title='Number of Batches'),
         color=alt.Color('MATERIAL:N', legend=alt.Legend(title="Material"))
     )
     
-    return (line + points).resolve_scale(y='shared')
+    return (line + points).resolve_scale(y='independent')
 
 # Streamlit app
 st.title('Manufacturing Batch Cycle Time Analysis')
@@ -70,4 +69,3 @@ if uploaded_file:
         y=alt.Y('CYCLE TIME:Q', axis=alt.Axis(title='Cycle Time (days)'))
     )
     st.altair_chart(boxplot, use_container_width=True)
-
