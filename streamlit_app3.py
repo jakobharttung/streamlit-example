@@ -17,17 +17,21 @@ def preprocess_data(uploaded_file, interval):
 
 # Function to generate the plot
 def generate_plot(df, interval):
-    # Calculate the average cycle time for each material and overall
+    # Group by the selected interval and calculate the average cycle time for each material
     material_avg = df.groupby(['MATERIAL', 'Interval'])['CYCLE TIME'].mean().reset_index()
-    overall_avg = df.groupby('Interval')['CYCLE TIME'].mean().reset_index()
     # Calculate the count of batches for each material in the given interval
     material_count = df.groupby(['MATERIAL', 'Interval']).size().reset_index(name='Batch Count')
+    # Merge the count data with the average cycle time data
+    material_avg = pd.merge(material_avg, material_count, on=['MATERIAL', 'Interval'])
+    
+    # Calculate the overall average cycle time per interval
+    overall_avg = df.groupby('Interval')['CYCLE TIME'].mean().reset_index()
     
     # Create the base chart for material averages
     points = alt.Chart(material_avg).mark_circle().encode(
         x=alt.X('Interval:O', axis=alt.Axis(title='Interval')),
         y=alt.Y('CYCLE TIME:Q', axis=alt.Axis(title='Average Cycle Time (days)')),
-        size=alt.Size('material_count:Q', title='Number of Batches'),
+        size=alt.Size('Batch Count:Q', title='Number of Batches'),
         color=alt.Color('MATERIAL:N', legend=alt.Legend(title="Material"))
     )
     
@@ -49,9 +53,6 @@ if uploaded_file:
     interval = st.radio("Select Time Interval", ('Monthly', 'Weekly'))
     
     df = preprocess_data(uploaded_file, interval)
-    
-    # Merge the count data with the average cycle time data
-    df = pd.merge(material_avg, material_count, on=['MATERIAL', 'Interval'])
     
     # Generate and display the plot
     plot = generate_plot(df, interval)
