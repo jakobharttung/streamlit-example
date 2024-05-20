@@ -1,7 +1,3 @@
-pip install pandas
-pip install pygwalker
-pip install streamlit
-
 from pygwalker.api.streamlit import StreamlitRenderer
 import pandas as pd
 import streamlit as st
