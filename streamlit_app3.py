@@ -41,7 +41,7 @@ def generate_plot(df, interval):
         y=alt.Y('CYCLE TIME:Q', axis=alt.Axis(title='Overall Average Cycle Time (days)'))
     )
     
-    return (points + line).resolve_scale(y='independent')
+    return (points + line)
 
 # Streamlit app
 st.title('Manufacturing Batch Cycle Time Analysis')
@@ -56,7 +56,7 @@ if uploaded_file:
     
     # Generate and display the plot
     plot = generate_plot(df, interval)
-    st.altair_chart(plot, use_container_width=True).resolve_scale(y='independent')
+    st.altair_chart(plot, use_container_width=True)
     
     # Selector for materials
     material = st.selectbox('Select a Material', df['MATERIAL'].unique())
