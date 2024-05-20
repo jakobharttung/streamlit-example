@@ -56,7 +56,7 @@ if uploaded_file:
     
     # Generate and display the plot
     plot = generate_plot(df, interval)
-    st.altair_chart(plot, use_container_width=True)
+    st.altair_chart(plot, use_container_width=True).resolve_scale(y='independent')
     
     # Selector for materials
     material = st.selectbox('Select a Material', df['MATERIAL'].unique())
