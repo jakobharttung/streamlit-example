@@ -8,7 +8,7 @@ st.set_page_config(
     layout="wide"
 )
 # Import your data
-df = pd.read_csv("Plant cycle time data.csv")
+df = pd.read_excel("Plant cycle time Data.xlsx")
  
 pyg_app = StreamlitRenderer(df)
  
