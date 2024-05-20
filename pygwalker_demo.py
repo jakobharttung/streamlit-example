@@ -12,7 +12,7 @@ st.set_page_config(
     layout="wide"
 )
 # Import your data
-df = pd.read_csv("https://kanaries-app.s3.ap-northeast-1.amazonaws.com/public-datasets/bike_sharing_dc.csv")
+df = pd.read_csv("Plant cycle time data.csv")
  
 pyg_app = StreamlitRenderer(df)
  
