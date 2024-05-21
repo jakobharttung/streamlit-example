@@ -16,7 +16,8 @@ df = pd.DataFrame(index=pd.date_range('2020-01-06', '2020-12-27', freq='h'))
 
 #add column to show sales by hour
 df['sales'] = np.random.randint(low=0, high=20, size=len(df.index))
-df['TS'] = df.index
+weekly_df['sales'] = df['sales'].resample('W').sum()
+weekly_df['TS'] = df.index
 # Import your data
 # df = pd.read_excel("timeseries.xlsx")
 # df_minute = pd.DataFrame()
