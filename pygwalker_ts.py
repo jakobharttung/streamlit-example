@@ -9,6 +9,7 @@ st.set_page_config(
 )
 # Import your data
 df = pd.read_excel("timeseries.xlsx")
-pyg_app = StreamlitRenderer(df)
+df_minute = df.resample('min').sum()
+pyg_app = StreamlitRenderer(df_minute)
  
 pyg_app.explorer()
