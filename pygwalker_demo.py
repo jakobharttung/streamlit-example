@@ -9,7 +9,7 @@ st.set_page_config(
 )
 # Import your data
 df = pd.read_excel("Plant cycle time Data.xlsx")
-df['graphmonth' = df['END TIME'].dt.strftime('%Y-%m') 
+df['graphmonth'] = df['END TIME'].dt.strftime('%Y-%m') 
 pyg_app = StreamlitRenderer(df)
  
 pyg_app.explorer()
