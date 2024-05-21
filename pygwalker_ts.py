@@ -23,6 +23,6 @@ weekly_df['TS'] = weekly_df.index
 # df = pd.read_excel("timeseries.xlsx")
 # df_minute = pd.DataFrame()
 #df_minute['RAW_VALUE'] = df['RAW_VALUE'].resample('D').sum()
-pyg_app = StreamlitRenderer(df)
+pyg_app = StreamlitRenderer(weekly_df)
  
 pyg_app.explorer()
