@@ -1,47 +1,41 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
-from datetime import datetime
 import numpy as np
 
 # Function to preprocess the data
 def preprocess_data(df, interval):
-    # Ensure CYCLE TIME is numeric
-    df['CYCLE TIME'] = pd.to_numeric(df['CYCLE TIME'], errors='coerce')
-    
-    # Convert END TIME to datetime
+    # Convert 'END TIME' to datetime and extract the desired time interval
     df['END TIME'] = pd.to_datetime(df['END TIME'])
-    
-    # Group by the selected interval
     if interval == 'Weekly':
-        df['TIME INTERVAL'] = df['END TIME'].dt.strftime('%Y-%U')
+        df['TIME INTERVAL'] = df['END TIME'].dt.to_period('W').apply(lambda r: r.start_time)
     else:
-        df['TIME INTERVAL'] = df['END TIME'].dt.strftime('%Y-%m')
+        df['TIME INTERVAL'] = df['END TIME'].dt.to_period('M').apply(lambda r: r.start_time)
     
+    # Ensure 'CYCLE TIME' is numeric
+    df['CYCLE TIME'] = pd.to_numeric(df['CYCLE TIME'], errors='coerce')
     return df
 
 # Function to calculate average cycle times
-def calculate_cycle_times(df):
-    # Calculate overall average cycle time
-    overall_avg = df['CYCLE TIME'].mean()
+def calculate_cycle_times(df, interval):
+    # Group by 'TIME INTERVAL' and 'MATERIAL' and calculate the mean 'CYCLE TIME'
+    material_cycle_time = df.groupby(['TIME INTERVAL', 'MATERIAL'])['CYCLE TIME'].mean().reset_index()
     
-    # Calculate material-level average cycle time
-    material_avg = df.groupby('MATERIAL')['CYCLE TIME'].mean().reset_index()
+    # Calculate the overall average 'CYCLE TIME' for each 'TIME INTERVAL'
+    overall_cycle_time = df.groupby('TIME INTERVAL')['CYCLE TIME'].mean().reset_index()
     
-    # Calculate the number of batches for each material
-    material_counts = df['MATERIAL'].value_counts().reset_index()
-    material_counts.columns = ['MATERIAL', 'BATCH COUNT']
+    # Count the number of batches for each 'MATERIAL' and 'TIME INTERVAL'
+    batch_counts = df.groupby(['TIME INTERVAL', 'MATERIAL']).size().reset_index(name='BATCH COUNT')
     
-    # Merge the averages and counts
-    material_cycle_times = pd.merge(material_avg, material_counts, on='MATERIAL')
-    
-    return overall_avg, material_cycle_times
+    # Merge the dataframes
+    material_cycle_time = pd.merge(material_cycle_time, batch_counts, on=['TIME INTERVAL', 'MATERIAL'])
+    return overall_cycle_time, material_cycle_time
 
 # Streamlit app
-st.title('Manufacturing Batch Cycle Time Analysis')
+st.title('Batch Cycle Time Analysis App')
 
 # File uploader
-uploaded_file = st.file_uploader("Upload your Excel file", type=['xlsx'])
+uploaded_file = st.file_uploader("Upload an Excel file", type=['xlsx'])
 
 if uploaded_file is not None:
     df = pd.read_excel(uploaded_file)
@@ -49,46 +43,39 @@ if uploaded_file is not None:
     # Time Interval Toggle
     interval = st.radio("Select Time Interval", ('Monthly', 'Weekly'))
     
-    # Preprocess data
+    # Preprocess the data
     df = preprocess_data(df, interval)
     
     # Calculate cycle times
-    overall_avg, material_cycle_times = calculate_cycle_times(df)
+    overall_cycle_time, material_cycle_time = calculate_cycle_times(df, interval)
     
-    # Combined Plot
-    base = alt.Chart(df).encode(
-        alt.X('TIME INTERVAL:O', axis=alt.Axis(title=interval + ' Interval'))
+    # Create the overall average cycle time line chart
+    line_chart = alt.Chart(overall_cycle_time).mark_line().encode(
+        x=alt.X('TIME INTERVAL:T', title='Time Interval'),
+        y=alt.Y('CYCLE TIME:Q', title='Overall Average Cycle Time (days)')
     )
     
-    # Line chart for overall average cycle time
-    line = base.mark_line(color='red').encode(
-        alt.Y('mean(CYCLE TIME):Q', axis=alt.Axis(title='Average Cycle Time (days)'))
-    )
-    
-    # Circle chart for material-level average cycle time
-    circles = base.mark_circle().encode(
-        alt.Y('CYCLE TIME:Q'),
-        alt.Size('BATCH COUNT:Q'),
-        alt.Color('MATERIAL:N', legend=alt.Legend(title='Material'))
-    ).transform_filter(
-        alt.datum['CYCLE TIME'] == material_cycle_times['CYCLE TIME']
+    # Create the material average cycle time circle chart
+    circle_chart = alt.Chart(material_cycle_time).mark_circle().encode(
+        x=alt.X('TIME INTERVAL:T', title='Time Interval'),
+        y=alt.Y('CYCLE TIME:Q', title='Material Average Cycle Time (days)'),
+        size=alt.Size('BATCH COUNT:Q', title='Number of Batches'),
+        color=alt.Color('MATERIAL:N', legend=alt.Legend(title='Material'))
     )
     
     # Combine the charts
-    combined_chart = alt.layer(line, circles).resolve_scale(y='shared')
-    
+    combined_chart = alt.layer(line_chart, circle_chart).resolve_scale(y='shared')
     st.altair_chart(combined_chart, use_container_width=True)
     
-    # Material Selector and Boxplot
-    selected_material = st.selectbox('Select a Material', df['MATERIAL'].unique())
+    # Material selector for boxplot
+    material_selector = st.selectbox('Select a Material for Boxplot', df['MATERIAL'].unique())
     
     # Filter data for the selected material
-    material_data = df[df['MATERIAL'] == selected_material]
+    material_data = df[df['MATERIAL'] == material_selector]
     
-    # Boxplot for cycle time distribution
+    # Create the boxplot
     boxplot = alt.Chart(material_data).mark_boxplot().encode(
-        alt.X('TIME INTERVAL:O', axis=alt.Axis(title=interval + ' Interval')),
-        alt.Y('CYCLE TIME:Q', axis=alt.Axis(title='Cycle Time (days)'))
+        x=alt.X('TIME INTERVAL:T', title='Time Interval'),
+        y=alt.Y('CYCLE TIME:Q', title='Cycle Time (days)')
     )
-    
     st.altair_chart(boxplot, use_container_width=True)
