@@ -23,7 +23,7 @@ np.random.seed(0)
 df = pd.read_excel("timeseries.xlsx")
 df.set_index('TS', inplace=True)
 df_minute = pd.DataFrame()
-df_minute['RAW_VALUE'] = df['RAW_VALUE'].resample('H').sum()
+df_minute['RAW_VALUE'] = df['RAW_VALUE'].resample('D').sum()
 df_minute['TS'] = df_minute.index
 pyg_app = StreamlitRenderer(df_minute)
  
