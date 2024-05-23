@@ -12,7 +12,7 @@ import streamlit as st
 def get_stock_data(ticker, years):
     end_date = datetime.datetime.now()
     start_date = end_date - datetime.timedelta(days=years*365)
-
+    stock = yf.Ticker(ticker)
     # Retrieve historical price data
     hist_data = stock.history(start=start_date, end=end_date)
     return hist_data
