@@ -31,7 +31,7 @@ def get_stock_data(ticker, years):
     # Retrieve news articles
     # news = stock.news
 
-    return hist_data, balance_sheet, financials, info, news
+    return hist_data, balance_sheet, financials, info
  
 # Adjust the width of the Streamlit page
 st.set_page_config(
