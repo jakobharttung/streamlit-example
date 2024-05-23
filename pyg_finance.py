@@ -10,28 +10,12 @@ import yfinance as yf
 from pygwalker.api.streamlit import StreamlitRenderer
 import streamlit as st
 def get_stock_data(ticker, years):
-    print(ticker)
     end_date = datetime.datetime.now()
     start_date = end_date - datetime.timedelta(days=years*365)
-    print(start_date)
-    stock = yf.Ticker(ticker)
 
     # Retrieve historical price data
     hist_data = stock.history(start=start_date, end=end_date)
-
-    # Retrieve balance sheet
-    balance_sheet = stock.balance_sheet
-
-    # Retrieve financial statements
-    financials = stock.financials
-
-    # Retrieve financial info
-    info = stock.info
-
-    # Retrieve news articles
-    # news = stock.news
-
-    return hist_data, balance_sheet, financials, info
+    return hist_data
  
 # Adjust the width of the Streamlit page
 st.set_page_config(
@@ -42,9 +26,9 @@ st.set_page_config(
 tickers = ["MSFT", "NVDA", "ANET", "TSLA"]
 years =  3
 
-hist_data, balance_sheet, financials, info = get_stock_data("MSFT", 3)
+data = get_stock_data("MSFT", 3)
     
-pyg_app = StreamlitRenderer(financials)
+pyg_app = StreamlitRenderer(data)
  
 pyg_app.explorer()
 
