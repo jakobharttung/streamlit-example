@@ -27,6 +27,7 @@ tickers = ["MSFT", "NVDA", "ANET", "TSLA"]
 years =  3
 
 data = get_stock_data("MSFT", 3)
+data['date'] = data.index
     
 pyg_app = StreamlitRenderer(data)
  
