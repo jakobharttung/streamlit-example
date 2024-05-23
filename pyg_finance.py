@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import altair as alt
+import yfinance as yf
 from pygwalker.api.streamlit import StreamlitRenderer
 import streamlit as st
 def get_stock_data(ticker, years):
