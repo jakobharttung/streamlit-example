@@ -38,7 +38,7 @@ st.set_page_config(
     layout="wide"
 )
 # Import your data
-tickers = np.array["MSFT", "NVDA", "ANET", "TSLA"]
+tickers = ["MSFT", "NVDA", "ANET", "TSLA"]
 years =  3
 
 for ticker in tickers:
