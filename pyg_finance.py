@@ -29,7 +29,7 @@ years =  3
 hist = pd.DataFrame()
 first = 0
 for ticker in tickers:
-    data = get_stock_data("ticker", 3)
+    data = get_stock_data(ticker, 3)
     data['date'] = data.index
     st.write(data)
     if first == 0:
