@@ -37,7 +37,7 @@ for ticker in tickers:
         first = 1
     else:
         st.write(hist.ticker.drop_duplicates())
-        hist.join(data, rsuffix=ticker)
+        hist = hist.join(data, rsuffix=ticker)
   
 pyg_app = StreamlitRenderer(data)
  
