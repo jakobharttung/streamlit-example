@@ -26,8 +26,11 @@ st.set_page_config(
 # Import your data
 tickers = ["MSFT", "NVDA", "ANET", "TSLA"]
 years =  3
-
-data = get_stock_data("TSLA", 3)
+hist = pd.Dataframe()
+for ticker in tickers:
+    data = get_stock_data("TSLA", 3)
+    hist.append(data)
+    
 data['date'] = data.index
     
 pyg_app = StreamlitRenderer(data)
