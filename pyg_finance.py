@@ -24,7 +24,7 @@ st.set_page_config(
     layout="wide"
 )
 # Import your data
-tickers = ["MSFT", "NVDA", "ANET"]
+tickers = ["MSFT", "NVDA", "ANET", "TSLA", "GFS"]
 years =  3
 hist = pd.DataFrame()
 first = 0
