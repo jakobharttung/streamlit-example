@@ -39,7 +39,7 @@ for ticker in tickers:
         hist = pd.concat([hist, data])
         st.write(hist.ticker.drop_duplicates())
           
-pyg_app = StreamlitRenderer(data)
+pyg_app = StreamlitRenderer(hist)
  
 pyg_app.explorer()
 
