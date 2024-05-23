@@ -42,8 +42,7 @@ st.set_page_config(
 tickers = ["MSFT", "NVDA", "ANET", "TSLA"]
 years =  3
 
-for ticker in tickers:
-    hist_data, balance_sheet, financials, info, news = get_stock_data(ticker, years)
+hist_data, balance_sheet, financials, info, news = get_stock_data("MSFT", 3)
     
 pyg_app = StreamlitRenderer(financials)
  
