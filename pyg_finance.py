@@ -29,9 +29,10 @@ years =  3
 hist = pd.DataFrame()
 for ticker in tickers:
     data = get_stock_data("TSLA", 3)
-    hist.append(data)
+    data['date'] = data.index
+    hist = hist.append(data,ignore_index=True)
     
-data['date'] = data.index
+
     
 pyg_app = StreamlitRenderer(data)
  
