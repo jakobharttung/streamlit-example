@@ -27,12 +27,15 @@ st.set_page_config(
 tickers = ["MSFT", "NVDA", "ANET", "TSLA"]
 years =  3
 hist = pd.DataFrame()
+first = 0
 for ticker in tickers:
     data = get_stock_data("TSLA", 3)
     data['date'] = data.index
-    hist = hist.append(data,ignore_index=True)
-    
-
+    if first == 0:
+        hist = data
+        first = 1
+    else:
+        hist = pd.merge(hist, data, left_index=True, right_index=True)
     
 pyg_app = StreamlitRenderer(data)
  
