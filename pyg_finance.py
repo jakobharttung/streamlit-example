@@ -29,7 +29,7 @@ def get_stock_data(ticker, years):
     info = stock.info
 
     # Retrieve news articles
-    news = stock.news
+    # news = stock.news
 
     return hist_data, balance_sheet, financials, info, news
  
