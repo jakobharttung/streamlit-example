@@ -32,7 +32,7 @@ for ticker in tickers:
     data = get_stock_data(ticker, 3)
     data['date'] = data.index
     data['ticker'] = ticker
-    st.write(data)
+    st.write(hist.groupby("ticker").count().reset_index)
     if first == 0:
         hist = data
         first = 1
