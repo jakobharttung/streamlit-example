@@ -11,7 +11,7 @@ import streamlit as st
 def get_stock_data(ticker, years):
     print(ticker)
     end_date = datetime.datetime.now()
-    start_date = end_date - timedelta(days=years*365)
+    start_date = end_date - datetime.timedelta(days=years*365)
     print(start_date)
     stock = yf.Ticker(ticker)
 
