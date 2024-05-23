@@ -9,6 +9,7 @@ import altair as alt
 import yfinance as yf
 from pygwalker.api.streamlit import StreamlitRenderer
 import streamlit as st
+
 def get_stock_data(ticker, years):
     end_date = datetime.datetime.now()
     start_date = end_date - datetime.timedelta(days=years*365)
