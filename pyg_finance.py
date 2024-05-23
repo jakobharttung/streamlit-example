@@ -32,11 +32,11 @@ for ticker in tickers:
     data = get_stock_data(ticker, 3)
     data['date'] = data.index
     data['ticker'] = ticker
-    st.write(hist.count())
     if first == 0:
         hist = data
         first = 1
     else:
+        st.write(ticker)
         hist = pd.merge(hist, data, left_index=True, right_index=True)
     
 pyg_app = StreamlitRenderer(data)
