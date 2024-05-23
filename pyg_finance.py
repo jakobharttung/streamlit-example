@@ -31,7 +31,7 @@ first = 0
 for ticker in tickers:
     data = get_stock_data("ticker", 3)
     data['date'] = data.index
-    st.write(ticker)
+    st.write(data)
     if first == 0:
         hist = data
         first = 1
