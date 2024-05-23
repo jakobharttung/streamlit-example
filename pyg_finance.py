@@ -40,8 +40,11 @@ st.set_page_config(
 # Import your data
 tickers = np.array['MSFT, 'NVDA', 'ANET', 'TSLA']
 years =  3
-hist_data, balance_sheet, financials, info, news = get_stock_data(ticker, years)
-pyg_app = StreamlitRenderer(df)
+
+for ticker in tickers:
+    hist_data, balance_sheet, financials, info, news = get_stock_data(ticker, years)
+    
+pyg_app = StreamlitRenderer(financials)
  
 pyg_app.explorer()
 
