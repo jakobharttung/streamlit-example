@@ -39,6 +39,8 @@ for ticker in tickers:
         hist = pd.concat([hist, data])
         st.write(hist.ticker.drop_duplicates())
           
+hist['daily change'] = hist.Close - hist.Open
+hist['volatility'] = hist.High - hist.Low
 pyg_app = StreamlitRenderer(hist)
  
 pyg_app.explorer()
