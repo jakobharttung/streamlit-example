@@ -5,9 +5,9 @@ import time
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 import altair as alt
-
+from pygwalker.api.streamlit import StreamlitRenderer
+import streamlit as st
 def get_stock_data(ticker, years):
     print(ticker)
     end_date = datetime.now().date()
@@ -31,7 +31,17 @@ def get_stock_data(ticker, years):
     news = stock.news
 
     return hist_data, balance_sheet, financials, info, news
-
+ 
+# Adjust the width of the Streamlit page
+st.set_page_config(
+    page_title="Use Pygwalker In Streamlit",
+    layout="wide"
+)
+# Import your data
 tickers = np.array['MSFT, 'NVDA', 'ANET', 'TSLA']
 years =  3
 hist_data, balance_sheet, financials, info, news = get_stock_data(ticker, years)
+pyg_app = StreamlitRenderer(df)
+ 
+pyg_app.explorer()
+
