@@ -12,8 +12,8 @@ st.set_page_config(
     layout="wide"
 )
 # Import your data
-pyg_app = StreamlitRenderer(hist)
 output = obb.equity.price.historical("AAPL")
 df = output.to_dataframe()
-pyg_app.explorer(df)
+pyg_app = StreamlitRenderer(df)
+pyg_app.explorer()
 
