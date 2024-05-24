@@ -5,7 +5,7 @@ import altair as alt
 import yfinance as yf
 from pygwalker.api.streamlit import StreamlitRenderer
 import streamlit as st
-import openBB as obb
+import openbb as obb
 
 # Adjust the width of the Streamlit page
 st.set_page_config(
