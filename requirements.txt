@@ -8,3 +8,4 @@ pygwalker
 yfinance
 openbb
 openbb-yfinance
+openbb_terminal
