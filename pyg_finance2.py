@@ -12,8 +12,15 @@ st.set_page_config(
     page_title="Use Pygwalker In Streamlit for Finance",
     layout="wide"
 )
-df = pdf.DataFrame()
-st.write("starting")
-pyg_app = StreamlitRenderer(df)
+df_daily = obb.equity.price.historical(symbol="tsla", 
+                                       start_date="2023-01-01", 
+                                       end_date="2023-12-31", 
+                                       interval="1d", 
+                                       provider="yfinance", 
+                                       adjusted=True).to_df()
+df_daily.drop(['dividends', 'stock_splits'], axis=1, inplace=True)
+
+st.write(df_daily)
+pyg_app = StreamlitRenderer(df_daily)
 pyg_app.explorer()
 
