@@ -16,7 +16,13 @@ st.write("starting")
 obb.account.login(pat="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Rva2VuIjoibTdvT2ZYY3VzWkV1N2sxNG56QXQ0eWJQQlZDTDZFSHExRk5CaUx3dSIsImV4cCI6MTc0ODA3Mjk5N30.MdAYRToDt-37uJScSgnNP8yPsvjhxCereq8caBsTz2M")
 st.write("logged in")
 # Import your data
-output = obb.equity.price.historical("AAPL")
+df = obb.equity.price.historical(
+        "AAPL",
+        start_date="2024-03-03",
+        end_date="2024-03-15",
+        interval="1d",
+        provider="yfinance"
+    ).to_df().get("close")
 df = output.to_dataframe()
 pyg_app = StreamlitRenderer(df)
 pyg_app.explorer()
