@@ -1,0 +1,3 @@
+pip install openbb[all]
+output = obb.equity.price.historical("AAPL")
+df = output.to_dataframe()
