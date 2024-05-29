@@ -63,7 +63,10 @@ if ticker_list:
             ),
             type='date'
         ),
-        yaxis=dict(autorange=True)  # Ensure the y-axis auto-adjusts to fit data
+        yaxis=dict(
+            autorange=True,
+            fixedrange=False  # Allow the range to dynamically adjust
+        )
     )
     
     # Add range slider and range selector to the market cap chart
@@ -87,7 +90,10 @@ if ticker_list:
             ),
             type='date'
         ),
-        yaxis=dict(autorange=True)  # Ensure the y-axis auto-adjusts to fit data
+        yaxis=dict(
+            autorange=True,
+            fixedrange=False  # Allow the range to dynamically adjust
+        )
     )
     
     st.plotly_chart(price_fig)
@@ -146,7 +152,10 @@ if ticker_list:
                     ),
                     type='date'
                 ),
-                yaxis=dict(autorange=True)  # Ensure the y-axis auto-adjusts to fit data
+                yaxis=dict(
+                    autorange=True,
+                    fixedrange=False  # Allow the range to dynamically adjust
+                )
             )
             
             st.plotly_chart(candlestick_fig)
