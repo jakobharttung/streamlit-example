@@ -6,4 +6,4 @@ streamlit
 openpyxl
 pygwalker
 yfinance
-plotly==4.14.3
+plotly
