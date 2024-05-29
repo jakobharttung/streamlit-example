@@ -13,6 +13,7 @@ tickers = st.text_input('Enter Comma-Separated Stock Ticker Symbols', 'AAPL, MSF
 ticker_list = [ticker.strip() for ticker in tickers.split(',')]
 
 # Date range input
+st.
 start_date = st.date_input('Start date', pd.to_datetime('2020-01-01'))
 end_date = st.date_input('End date', pd.to_datetime('today'))
 
