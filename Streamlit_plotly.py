@@ -1,6 +1,7 @@
 import streamlit as st
 import yfinance as yf
 import plotly.graph_objects as go
+import pandas as pd
 
 # Set up the Streamlit app
 st.title('Stock Price and Market Capitalization Viewer')
@@ -31,13 +32,15 @@ if ticker_list:
             ))
             
             # Calculate market capitalization and add a trace for each ticker in the market cap chart
-            hist['Market Cap'] = hist['Close'] * stock_data.info.get('sharesOutstanding', 0)
-            market_cap_fig.add_trace(go.Scatter(
-                x=hist.index,
-                y=hist['Market Cap'],
-                mode='lines',
-                name=ticker
-            ))
+            shares_outstanding = stock_data.info.get('sharesOutstanding')
+            if shares_outstanding:
+                hist['Market Cap'] = hist['Close'] * shares_outstanding
+                market_cap_fig.add_trace(go.Scatter(
+                    x=hist.index,
+                    y=hist['Market Cap'],
+                    mode='lines',
+                    name=ticker
+                ))
     
     # Add range slider and range selector to the price chart
     price_fig.update_layout(
