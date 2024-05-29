@@ -12,10 +12,6 @@ tickers = st.text_input('Enter Comma-Separated Stock Ticker Symbols', 'AAPL, MSF
 # Split the tickers into a list
 ticker_list = [ticker.strip() for ticker in tickers.split(',')]
 
-# Date range input
-start_date = st.date_input('Start date', pd.to_datetime('2020-01-01'))
-end_date = st.date_input('End date', pd.to_datetime('today'))
-
 # Retrieve and plot stock price data for each ticker
 if ticker_list:
     price_fig = go.Figure()
@@ -24,9 +20,6 @@ if ticker_list:
     for ticker in ticker_list:
         stock_data = yf.Ticker(ticker)
         hist = stock_data.history(period='max')
-        
-        # Filter the data based on the selected date range
-        hist = hist.loc[start_date:end_date]
         
         # Check if the data is not empty
         if not hist.empty:
@@ -111,9 +104,6 @@ if ticker_list:
     if selected_ticker:
         selected_stock_data = yf.Ticker(selected_ticker)
         selected_hist = selected_stock_data.history(period='max')
-        
-        # Filter the data based on the selected date range
-        selected_hist = selected_hist.loc[start_date:end_date]
         
         if not selected_hist.empty:
             # Ensure the index is a DateTimeIndex and handle resampling
