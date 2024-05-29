@@ -6,8 +6,7 @@ streamlit
 openpyxl
 pygwalker
 yfinance
-plotly
-plotly.graph_objects
+plotly==4.14.3
 openbb
 openbb-yfinance
 openbb_terminal
