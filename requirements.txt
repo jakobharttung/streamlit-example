@@ -7,6 +7,3 @@ openpyxl
 pygwalker
 yfinance
 plotly==4.14.3
-openbb
-openbb-yfinance
-openbb_terminal
