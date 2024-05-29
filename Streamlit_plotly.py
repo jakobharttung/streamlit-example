@@ -93,7 +93,7 @@ if ticker_list:
     
     # Add dropdown to select a ticker and resampling interval
     selected_ticker = st.selectbox('Select Ticker for Candlestick Chart', ticker_list)
-    resample_interval = st.selectbox('Select Resampling Interval', ['1d', '1wk', '1mo'])
+    resample_interval = st.selectbox('Select Resampling Interval', ['D', 'W', 'M'])
     
     if selected_ticker:
         selected_stock_data = yf.Ticker(selected_ticker)
