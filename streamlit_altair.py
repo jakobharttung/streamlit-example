@@ -3,7 +3,8 @@ import yfinance as yf
 import mplfinance as mpf
 
 def load_data(ticker):
-    data = yf.download(ticker, start="2021-01-01")
+    stock_data = yf.Ticker(ticker)
+    data = stock_data.history(period="5y")
     return data
 
 st.title("Stock Price Visualization")
