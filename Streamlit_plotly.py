@@ -64,8 +64,7 @@ if ticker_list:
             type='date'
         ),
         yaxis=dict(
-            autorange=True,
-            fixedrange=False  # Allow the range to dynamically adjust
+            autorange=True
         )
     )
     
@@ -91,8 +90,7 @@ if ticker_list:
             type='date'
         ),
         yaxis=dict(
-            autorange=True,
-            fixedrange=False  # Allow the range to dynamically adjust
+            autorange=True
         )
     )
     
@@ -153,8 +151,7 @@ if ticker_list:
                     type='date'
                 ),
                 yaxis=dict(
-                    autorange=True,
-                    fixedrange=False  # Allow the range to dynamically adjust
+                    autorange=True
                 )
             )
             
