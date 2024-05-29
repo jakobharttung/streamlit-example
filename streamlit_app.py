@@ -5,17 +5,16 @@ import pandas as pd
 
 # Set up the Streamlit app
 st.title('Stock Price and Market Capitalization Viewer')
+# Date range input
+start_date = st.date_input('Start date', pd.to_datetime('2020-01-01'))
+end_date = st.date_input('End date', pd.to_datetime('today'))
+
 
 # Create an input field for the comma-separated list of ticker symbols
 tickers = st.text_input('Enter Comma-Separated Stock Ticker Symbols', 'AAPL, MSFT, GOOGL')
 
 # Split the tickers into a list
 ticker_list = [ticker.strip() for ticker in tickers.split(',')]
-
-# Date range input
-st.
-start_date = st.date_input('Start date', pd.to_datetime('2020-01-01'))
-end_date = st.date_input('End date', pd.to_datetime('today'))
 
 # Retrieve and plot stock price data for each ticker
 if ticker_list:
