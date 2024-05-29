@@ -87,6 +87,58 @@ if ticker_list:
     
     st.plotly_chart(price_fig)
     st.plotly_chart(market_cap_fig)
+    
+    # Add dropdown to select a ticker and resampling interval
+    selected_ticker = st.selectbox('Select Ticker for Candlestick Chart', ticker_list)
+    resample_interval = st.selectbox('Select Resampling Interval', ['1d', '1wk', '1mo'])
+    
+    if selected_ticker:
+        selected_stock_data = yf.Ticker(selected_ticker)
+        selected_hist = selected_stock_data.history(period='max')
+        
+        if not selected_hist.empty:
+            # Resample the data based on the selected interval
+            resampled_hist = selected_hist.resample(resample_interval).agg({
+                'Open': 'first',
+                'High': 'max',
+                'Low': 'min',
+                'Close': 'last',
+                'Volume': 'sum'
+            }).dropna()
+            
+            # Create a candlestick chart
+            candlestick_fig = go.Figure(data=[go.Candlestick(
+                x=resampled_hist.index,
+                open=resampled_hist['Open'],
+                high=resampled_hist['High'],
+                low=resampled_hist['Low'],
+                close=resampled_hist['Close'],
+                name=selected_ticker
+            )])
+            
+            candlestick_fig.update_layout(
+                title=f'{selected_ticker} Candlestick Chart',
+                xaxis_title='Date',
+                yaxis_title='Price',
+                xaxis=dict(
+                    rangeselector=dict(
+                        buttons=list([
+                            dict(count=1, label='1m', step='month', stepmode='backward'),
+                            dict(count=3, label='3m', step='month', stepmode='backward'),
+                            dict(count=6, label='6m', step='month', stepmode='backward'),
+                            dict(count=1, label='YTD', step='year', stepmode='todate'),
+                            dict(count=1, label='1y', step='year', stepmode='backward'),
+                            dict(step='all')
+                        ])
+                    ),
+                    rangeslider=dict(
+                        visible=True
+                    ),
+                    type='date'
+                )
+            )
+            
+            st.plotly_chart(candlestick_fig)
 else:
     st.write('Please enter at least one ticker symbol.')
 
