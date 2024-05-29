@@ -1,69 +1,172 @@
 import streamlit as st
-import altair as alt
+import yfinance as yf
+import plotly.graph_objects as go
 import pandas as pd
 
-def load_data(uploaded_file):
-    # Load the Excel file
-    data = pd.read_excel(uploaded_file)
-    data['End Time'] = pd.to_datetime(data['End Time'])
-    # Create period columns for aggregation
-    data['Month_Year'] = data['End Time'].dt.to_period('M')
-    data['Week_Year'] = data['End Time'].dt.strftime('%Y - W%V')
-    return data
+# Set up the Streamlit app
+st.title('Stock Price and Market Capitalization Viewer')
 
-st.title("Batch Cycle Times Analysis")
+# Create an input field for the comma-separated list of ticker symbols
+tickers = st.text_input('Enter Comma-Separated Stock Ticker Symbols', 'AAPL, MSFT, GOOGL')
 
-# File uploader
-uploaded_file = st.file_uploader("Upload your Excel file", type='xlsx')
-if uploaded_file is not None:
-    data = load_data(uploaded_file)
+# Split the tickers into a list
+ticker_list = [ticker.strip() for ticker in tickers.split(',')]
+
+# Date range input
+start_date = st.date_input('Start date', pd.to_datetime('2020-01-01'))
+end_date = st.date_input('End date', pd.to_datetime('today'))
+
+# Retrieve and plot stock price data for each ticker
+if ticker_list:
+    price_fig = go.Figure()
+    market_cap_fig = go.Figure()
     
-    # Interval selection
-    interval = st.radio("Choose the analysis interval:", ('Weekly', 'Monthly'))
-    interval_col = 'Month_Year' if interval == 'Monthly' else 'Week_Year'
+    for ticker in ticker_list:
+        stock_data = yf.Ticker(ticker)
+        hist = stock_data.history(period='max')
+        
+        # Filter the data based on the selected date range
+        hist = hist.loc[start_date:end_date]
+        
+        # Check if the data is not empty
+        if not hist.empty:
+            # Add a trace for each ticker in the price chart
+            price_fig.add_trace(go.Scatter(
+                x=hist.index,
+                y=hist['Close'],
+                mode='lines',
+                name=ticker
+            ))
+            
+            # Calculate market capitalization and add a trace for each ticker in the market cap chart
+            shares_outstanding = stock_data.info.get('sharesOutstanding')
+            if shares_outstanding:
+                hist['Market Cap'] = hist['Close'] * shares_outstanding
+                market_cap_fig.add_trace(go.Scatter(
+                    x=hist.index,
+                    y=hist['Market Cap'],
+                    mode='lines',
+                    name=ticker
+                ))
     
-    # Aggregate data for overall and per material
-    overall_avg_data = data.groupby(interval_col)['Cycle Time'].mean().reset_index().rename(columns={'Cycle Time': 'Overall Average'})
-    material_avg_data = data.groupby(['Material', interval_col]).agg(
-        Average_Cycle_Time=('Cycle Time', 'mean'),
-        Number_of_Batches=('Material', 'size')
-    ).reset_index()
-
-    # Line chart for overall average cycle time
-    line = alt.Chart(overall_avg_data).mark_line(color='red').encode(
-        x=alt.X(interval_col, title='Time Interval'),
-        y=alt.Y('Overall Average', title='Average Cycle Time (days)')
-    )
-
-    # Circle chart for material-specific averages
-    circles = alt.Chart(material_avg_data).mark_circle().encode(
-        x=alt.X(interval_col, title='Time Interval'),
-        y=alt.Y('Average_Cycle_Time', title='Average Cycle Time (days)'),
-        size='Number_of_Batches',
-        color='Material',
-        tooltip=['Material', 'Average_Cycle_Time', 'Number_of_Batches']
-    )
-
-    # Combine charts with shared y-axis
-    combined_chart = alt.layer(line, circles).resolve_scale(
-        y='shared'
-    ).properties(
-        width=700,
-        height=400
+    # Add range slider and range selector to the price chart
+    price_fig.update_layout(
+        title='Stock Prices',
+        xaxis_title='Date',
+        yaxis_title='Close Price',
+        xaxis=dict(
+            rangeselector=dict(
+                buttons=list([
+                    dict(count=1, label='1m', step='month', stepmode='backward'),
+                    dict(count=3, label='3m', step='month', stepmode='backward'),
+                    dict(count=6, label='6m', step='month', stepmode='backward'),
+                    dict(count=1, label='YTD', step='year', stepmode='todate'),
+                    dict(count=1, label='1y', step='year', stepmode='backward'),
+                    dict(step='all')
+                ])
+            ),
+            rangeslider=dict(
+                visible=True
+            ),
+            type='date'
+        ),
+        yaxis=dict(
+            autorange=True
+        )
     )
     
-    st.altair_chart(combined_chart, use_container_width=True)
-
-    # Selector for materials and boxplot for cycle time distribution
-    selected_material = st.selectbox('Select a material:', data['Material'].unique())
-    material_data = data[data['Material'] == selected_material]
-    boxplot = alt.Chart(material_data).mark_boxplot().encode(
-        x=alt.X(interval_col, title='Time Interval'),
-        y=alt.Y('Cycle Time', title='Cycle Time (days)')
-    ).properties(
-        title=f'Cycle Time Distribution for {selected_material}',
-        width=700,
-        height=400
+    # Add range slider and range selector to the market cap chart
+    market_cap_fig.update_layout(
+        title='Market Capitalization',
+        xaxis_title='Date',
+        yaxis_title='Market Cap',
+        xaxis=dict(
+            rangeselector=dict(
+                buttons=list([
+                    dict(count=1, label='1m', step='month', stepmode='backward'),
+                    dict(count=3, label='3m', step='month', stepmode='backward'),
+                    dict(count=6, label='6m', step='month', stepmode='backward'),
+                    dict(count=1, label='YTD', step='year', stepmode='todate'),
+                    dict(count=1, label='1y', step='year', stepmode='backward'),
+                    dict(step='all')
+                ])
+            ),
+            rangeslider=dict(
+                visible=True
+            ),
+            type='date'
+        ),
+        yaxis=dict(
+            autorange=True
+        )
     )
     
-    st.altair_chart(boxplot, use_container_width=True)
+    st.plotly_chart(price_fig)
+    st.plotly_chart(market_cap_fig)
+    
+    # Add dropdown to select a ticker and resampling interval
+    selected_ticker = st.selectbox('Select Ticker for Candlestick Chart', ticker_list)
+    resample_interval = st.selectbox('Select Resampling Interval', ['D', 'W', 'M'])
+    
+    if selected_ticker:
+        selected_stock_data = yf.Ticker(selected_ticker)
+        selected_hist = selected_stock_data.history(period='max')
+        
+        # Filter the data based on the selected date range
+        selected_hist = selected_hist.loc[start_date:end_date]
+        
+        if not selected_hist.empty:
+            # Ensure the index is a DateTimeIndex and handle resampling
+            selected_hist.index = pd.to_datetime(selected_hist.index)
+            
+            if resample_interval != 'D':
+                resampled_hist = selected_hist.resample(resample_interval).agg({
+                    'Open': 'first',
+                    'High': 'max',
+                    'Low': 'min',
+                    'Close': 'last',
+                    'Volume': 'sum'
+                }).dropna()
+            else:
+                resampled_hist = selected_hist
+            
+            # Create a candlestick chart
+            candlestick_fig = go.Figure(data=[go.Candlestick(
+                x=resampled_hist.index,
+                open=resampled_hist['Open'],
+                high=resampled_hist['High'],
+                low=resampled_hist['Low'],
+                close=resampled_hist['Close'],
+                name=selected_ticker
+            )])
+            
+            candlestick_fig.update_layout(
+                title=f'{selected_ticker} Candlestick Chart',
+                xaxis_title='Date',
+                yaxis_title='Price',
+                xaxis=dict(
+                    rangeselector=dict(
+                        buttons=list([
+                            dict(count=1, label='1m', step='month', stepmode='backward'),
+                            dict(count=3, label='3m', step='month', stepmode='backward'),
+                            dict(count=6, label='6m', step='month', stepmode='backward'),
+                            dict(count=1, label='YTD', step='year', stepmode='todate'),
+                            dict(count=1, label='1y', step='year', stepmode='backward'),
+                            dict(step='all')
+                        ])
+                    ),
+                    rangeslider=dict(
+                        visible=True
+                    ),
+                    type='date'
+                ),
+                yaxis=dict(
+                    autorange=True
+                )
+            )
+            
+            st.plotly_chart(candlestick_fig)
+else:
+    st.write('Please enter at least one ticker symbol.')
+
+# Run the app using the command: streamlit run stock_price_viewer.py
