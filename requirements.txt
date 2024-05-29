@@ -6,6 +6,7 @@ streamlit
 openpyxl
 pygwalker
 yfinance
+plotly
 openbb
 openbb-yfinance
 openbb_terminal
