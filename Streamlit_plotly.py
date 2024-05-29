@@ -103,7 +103,7 @@ if ticker_list:
             # Ensure the index is a DateTimeIndex and handle resampling
             selected_hist.index = pd.to_datetime(selected_hist.index)
             
-            if resample_interval != '1d':
+            if resample_interval != 'D':
                 resampled_hist = selected_hist.resample(resample_interval).agg({
                     'Open': 'first',
                     'High': 'max',
