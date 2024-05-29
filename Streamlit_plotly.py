@@ -31,7 +31,7 @@ if ticker_list:
             ))
             
             # Calculate market capitalization and add a trace for each ticker in the market cap chart
-            hist['Market Cap'] = hist['Close'] * stock_data.info['sharesOutstanding']
+            hist['Market Cap'] = hist['Close'] * stock_data.info.get('sharesOutstanding', 0)
             market_cap_fig.add_trace(go.Scatter(
                 x=hist.index,
                 y=hist['Market Cap'],
@@ -97,14 +97,19 @@ if ticker_list:
         selected_hist = selected_stock_data.history(period='max')
         
         if not selected_hist.empty:
-            # Resample the data based on the selected interval
-            resampled_hist = selected_hist.resample(resample_interval).agg({
-                'Open': 'first',
-                'High': 'max',
-                'Low': 'min',
-                'Close': 'last',
-                'Volume': 'sum'
-            }).dropna()
+            # Ensure the index is a DateTimeIndex and handle resampling
+            selected_hist.index = pd.to_datetime(selected_hist.index)
+            
+            if resample_interval != '1d':
+                resampled_hist = selected_hist.resample(resample_interval).agg({
+                    'Open': 'first',
+                    'High': 'max',
+                    'Low': 'min',
+                    'Close': 'last',
+                    'Volume': 'sum'
+                }).dropna()
+            else:
+                resampled_hist = selected_hist
             
             # Create a candlestick chart
             candlestick_fig = go.Figure(data=[go.Candlestick(
