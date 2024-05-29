@@ -46,6 +46,8 @@ if ticker_list:
             tooltip=['Date:T', 'Close:Q', 'Ticker:N']
         ).interactive().properties(
             title='Stock Prices'
+        ).add_selection(
+            alt.selection_interval(bind='scales')
         )
         
         st.altair_chart(price_chart, use_container_width=True)
@@ -61,6 +63,8 @@ if ticker_list:
             tooltip=['Date:T', 'Market Cap:Q', 'Ticker:N']
         ).interactive().properties(
             title='Market Capitalization'
+        ).add_selection(
+            alt.selection_interval(bind='scales')
         )
         
         st.altair_chart(market_cap_chart, use_container_width=True)
@@ -89,17 +93,24 @@ if ticker_list:
                 resampled_hist = selected_hist
             
             # Create a candlestick chart with Altair
-            candlestick_df = resampled_hist.reset_index().melt(
-                id_vars=['Date'], value_vars=['Open', 'High', 'Low', 'Close'], var_name='Type', value_name='Price'
-            )
-            
-            candlestick_chart = alt.Chart(candlestick_df).mark_line().encode(
+            candlestick_chart = alt.Chart(resampled_hist.reset_index()).mark_rule().encode(
                 x='Date:T',
-                y='Price:Q',
-                color='Type:N',
-                tooltip=['Date:T', 'Type:N', 'Price:Q']
+                y='Low:Q',
+                y2='High:Q',
+                color=alt.value('black')
             ).interactive().properties(
                 title=f'{selected_ticker} Candlestick Chart'
+            ) + alt.Chart(resampled_hist.reset_index()).mark_bar().encode(
+                x='Date:T',
+                open='Open:Q',
+                close='Close:Q',
+                y='Low:Q',
+                y2='High:Q',
+                color=alt.condition(
+                    "datum.Open <= datum.Close",
+                    alt.value("#06982d"),  # Green for positive growth
+                    alt.value("#ae1325")   # Red for negative growth
+                )
             )
             
             st.altair_chart(candlestick_chart, use_container_width=True)
