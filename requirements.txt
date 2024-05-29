@@ -7,3 +7,4 @@ openpyxl
 pygwalker
 yfinance
 plotly
+mplfinance
