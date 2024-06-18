@@ -12,7 +12,6 @@ start_date = (datetime.today() - timedelta(days=3652)).strftime('%Y-%m-%d')
 
 # Download the data
 data = yf.download(tickers, start=start_date, end=end_date)['Close']
-st.write(data)
 # Reset index to get 'Date' column
 data.reset_index(inplace=True)
 
