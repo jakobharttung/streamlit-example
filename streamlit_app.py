@@ -1,172 +1,33 @@
 import streamlit as st
 import yfinance as yf
-import plotly.graph_objects as go
-import pandas as pd
+import plotly.express as px
+from datetime import datetime, timedelta
 
-# Set up the Streamlit app
-st.title('Stock Price and Market Capitalization Viewer')
-# Date range input
-start_date = st.date_input('Start date', pd.to_datetime('2020-01-01'))
-end_date = st.date_input('End date', pd.to_datetime('today'))
+# Define the ticker symbols
+tickers = ['MSFT', 'GOOG', 'TSLA', 'NVDA', 'SAN.PA', 'OR.PA']
 
+# Get 10 years of market close data
+end_date = datetime.now()
+start_date = end_date - timedelta(days=365*10)
 
-# Create an input field for the comma-separated list of ticker symbols
-tickers = st.text_input('Enter Comma-Separated Stock Ticker Symbols', 'AAPL, MSFT, GOOGL')
+# Retrieve stock data
+data = yf.download(tickers, start=start_date, end=end_date)['Close']
 
-# Split the tickers into a list
-ticker_list = [ticker.strip() for ticker in tickers.split(',')]
+# Line chart with range selection
+st.title('Stock Performance Analysis')
+st.subheader('10 Year Market Close Data')
+fig = px.line(data, x=data.index, y=tickers)
+fig.update_xaxes(rangeslider_visible=True)
+st.plotly_chart(fig)
 
-# Retrieve and plot stock price data for each ticker
-if ticker_list:
-    price_fig = go.Figure()
-    market_cap_fig = go.Figure()
-    
-    for ticker in ticker_list:
-        stock_data = yf.Ticker(ticker)
-        hist = stock_data.history(period='max')
-        
-        # Filter the data based on the selected date range
-        hist = hist.loc[start_date:end_date]
-        
-        # Check if the data is not empty
-        if not hist.empty:
-            # Add a trace for each ticker in the price chart
-            price_fig.add_trace(go.Scatter(
-                x=hist.index,
-                y=hist['Close'],
-                mode='lines',
-                name=ticker
-            ))
-            
-            # Calculate market capitalization and add a trace for each ticker in the market cap chart
-            shares_outstanding = stock_data.info.get('sharesOutstanding')
-            if shares_outstanding:
-                hist['Market Cap'] = hist['Close'] * shares_outstanding
-                market_cap_fig.add_trace(go.Scatter(
-                    x=hist.index,
-                    y=hist['Market Cap'],
-                    mode='lines',
-                    name=ticker
-                ))
-    
-    # Add range slider and range selector to the price chart
-    price_fig.update_layout(
-        title='Stock Prices',
-        xaxis_title='Date',
-        yaxis_title='Close Price',
-        xaxis=dict(
-            rangeselector=dict(
-                buttons=list([
-                    dict(count=1, label='1m', step='month', stepmode='backward'),
-                    dict(count=3, label='3m', step='month', stepmode='backward'),
-                    dict(count=6, label='6m', step='month', stepmode='backward'),
-                    dict(count=1, label='YTD', step='year', stepmode='todate'),
-                    dict(count=1, label='1y', step='year', stepmode='backward'),
-                    dict(step='all')
-                ])
-            ),
-            rangeslider=dict(
-                visible=True
-            ),
-            type='date'
-        ),
-        yaxis=dict(
-            autorange=True
-        )
-    )
-    
-    # Add range slider and range selector to the market cap chart
-    market_cap_fig.update_layout(
-        title='Market Capitalization',
-        xaxis_title='Date',
-        yaxis_title='Market Cap',
-        xaxis=dict(
-            rangeselector=dict(
-                buttons=list([
-                    dict(count=1, label='1m', step='month', stepmode='backward'),
-                    dict(count=3, label='3m', step='month', stepmode='backward'),
-                    dict(count=6, label='6m', step='month', stepmode='backward'),
-                    dict(count=1, label='YTD', step='year', stepmode='todate'),
-                    dict(count=1, label='1y', step='year', stepmode='backward'),
-                    dict(step='all')
-                ])
-            ),
-            rangeslider=dict(
-                visible=True
-            ),
-            type='date'
-        ),
-        yaxis=dict(
-            autorange=True
-        )
-    )
-    
-    st.plotly_chart(price_fig)
-    st.plotly_chart(market_cap_fig)
-    
-    # Add dropdown to select a ticker and resampling interval
-    selected_ticker = st.selectbox('Select Ticker for Candlestick Chart', ticker_list)
-    resample_interval = st.selectbox('Select Resampling Interval', ['D', 'W', 'M'])
-    
-    if selected_ticker:
-        selected_stock_data = yf.Ticker(selected_ticker)
-        selected_hist = selected_stock_data.history(period='max')
-        
-        # Filter the data based on the selected date range
-        selected_hist = selected_hist.loc[start_date:end_date]
-        
-        if not selected_hist.empty:
-            # Ensure the index is a DateTimeIndex and handle resampling
-            selected_hist.index = pd.to_datetime(selected_hist.index)
-            
-            if resample_interval != 'D':
-                resampled_hist = selected_hist.resample(resample_interval).agg({
-                    'Open': 'first',
-                    'High': 'max',
-                    'Low': 'min',
-                    'Close': 'last',
-                    'Volume': 'sum'
-                }).dropna()
-            else:
-                resampled_hist = selected_hist
-            
-            # Create a candlestick chart
-            candlestick_fig = go.Figure(data=[go.Candlestick(
-                x=resampled_hist.index,
-                open=resampled_hist['Open'],
-                high=resampled_hist['High'],
-                low=resampled_hist['Low'],
-                close=resampled_hist['Close'],
-                name=selected_ticker
-            )])
-            
-            candlestick_fig.update_layout(
-                title=f'{selected_ticker} Candlestick Chart',
-                xaxis_title='Date',
-                yaxis_title='Price',
-                xaxis=dict(
-                    rangeselector=dict(
-                        buttons=list([
-                            dict(count=1, label='1m', step='month', stepmode='backward'),
-                            dict(count=3, label='3m', step='month', stepmode='backward'),
-                            dict(count=6, label='6m', step='month', stepmode='backward'),
-                            dict(count=1, label='YTD', step='year', stepmode='todate'),
-                            dict(count=1, label='1y', step='year', stepmode='backward'),
-                            dict(step='all')
-                        ])
-                    ),
-                    rangeslider=dict(
-                        visible=True
-                    ),
-                    type='date'
-                ),
-                yaxis=dict(
-                    autorange=True
-                )
-            )
-            
-            st.plotly_chart(candlestick_fig)
-else:
-    st.write('Please enter at least one ticker symbol.')
+# Add buttons for standard yfinance intervals
+intervals = ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']
+for interval in intervals:
+    st.button(interval)
 
-# Run the app using the command: streamlit run stock_price_viewer.py
+# Dropdown for candlestick chart
+st.subheader('Candlestick Chart')
+selected_ticker = st.selectbox('Select a ticker', tickers)
+ticker_data = yf.download(selected_ticker, period='1d', interval='1m')
+candlestick = px.line(ticker_data, x=ticker_data.index, y='Close')
+st.plotly_chart(candlestick)
