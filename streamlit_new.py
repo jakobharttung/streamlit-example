@@ -3,37 +3,31 @@ import yfinance as yf
 import plotly.express as px
 from datetime import datetime, timedelta
 
-# Define the tickers
+# Define the ticker symbols
 tickers = ['MSFT', 'GOOG', 'TSLA', 'NVDA', 'SAN.PA', 'OR.PA']
 
 # Get 10 years of market close data
-end_date = datetime.today().strftime('%Y-%m-%d')
-start_date = (datetime.today() - timedelta(days=3652)).strftime('%Y-%m-%d')
+end_date = datetime.now()
+start_date = end_date - timedelta(days=365*10)
 
-# Download the data
+# Retrieve stock data
 data = yf.download(tickers, start=start_date, end=end_date)['Close']
-# Reset index to get 'Date' column
-data.reset_index(inplace=True)
-
-# Streamlit app layout
-st.title('Stock Performance Analysis')
 
 # Line chart with range selection
-st.subheader('Stock Closing Prices Over 10 Years')
-fig = px.line(data, x='Date', y=tickers)
+st.title('Stock Performance Analysis')
+st.subheader('10 Year Market Close Data')
+fig = px.line(data, x=data.index, y=tickers)
 fig.update_xaxes(rangeslider_visible=True)
 st.plotly_chart(fig)
 
+# Add buttons for standard yfinance intervals
+intervals = ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']
+for interval in intervals:
+    st.button(interval)
+
 # Dropdown for candlestick chart
-st.subheader('Detailed View')
-selected_ticker = st.selectbox('Select a ticker for detailed view:', tickers)
-
-# Get data for the selected ticker
-ticker_data = yf.download(selected_ticker, start=start_date, end=end_date)
-
-# Candlestick chart
-fig_candle = px.line(ticker_data, x=ticker_data.index, y='Close')
-st.plotly_chart(fig_candle)
-
-
-
+st.subheader('Candlestick Chart')
+selected_ticker = st.selectbox('Select a ticker', tickers)
+ticker_data = yf.download(selected_ticker, period='1d', interval='1m')
+candlestick = px.line(ticker_data, x=ticker_data.index, y='Close')
+st.plotly_chart(candlestick)
