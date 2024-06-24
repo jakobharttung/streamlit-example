@@ -20,6 +20,8 @@ if ticker_list:
     for ticker in ticker_list:
         stock_data = yf.Ticker(ticker)
         hist = stock_data.history(period='max')
+        news = stock_data.news
+        st.write(stock_data)
         
         # Check if the data is not empty
         if not hist.empty:
