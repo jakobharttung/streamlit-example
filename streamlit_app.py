@@ -4,6 +4,7 @@ import mplfinance as mpf
 import pandas as pd
 from datetime import date
 from dateutil.relativedelta import relativedelta
+import numpy as np
 
 # --------------------------------------------------------------------------
 # Streamlit Title
@@ -45,23 +46,46 @@ if not isinstance(data.index, pd.DatetimeIndex):
     data.index = pd.to_datetime(data.index)
 
 # --------------------------------------------------------------------------
-# Fix Column Order for mplfinance
+# Fix Column Order and Ensure Data is Numeric
 # --------------------------------------------------------------------------
 required_columns = ["Open", "High", "Low", "Close", "Volume"]
 
-# Ensure only required columns exist and are in the correct order
-if not all(col in data.columns for col in required_columns):
-    st.error(f"⚠️ Missing required columns: {set(required_columns) - set(data.columns)}")
+# Ensure required columns exist
+missing_columns = [col for col in required_columns if col not in data.columns]
+
+if missing_columns:
+    st.error(f"⚠️ Missing required columns: {missing_columns}")
     st.stop()
 
-# Reconstruct the DataFrame explicitly for mplfinance
-ohlc = data[required_columns].copy()  # Ensure it's a new DataFrame
+# Convert only existing columns to numeric
+for col in required_columns:
+    data[col] = pd.to_numeric(data[col], errors="coerce")  # Convert and coerce errors to NaN
 
 # --------------------------------------------------------------------------
-# Debugging Step 2: Show Cleaned Data Before Plotting
+# Debugging Step 2: Show Data Types Before Cleaning
 # --------------------------------------------------------------------------
-st.subheader("🔍 Cleaned Data Preview")
-st.write(ohlc.head())
+st.subheader("📊 Data Types Before Cleaning")
+st.write(data.dtypes)
+
+# --------------------------------------------------------------------------
+# Remove NaN, Inf, or Any Invalid Values
+# --------------------------------------------------------------------------
+# Replace Inf values with NaN
+data.replace([np.inf, -np.inf], np.nan, inplace=True)
+
+# Drop rows where any required column is NaN
+data.dropna(subset=required_columns, inplace=True)
+
+# --------------------------------------------------------------------------
+# Debugging Step 3: Show Cleaned Data Before Plotting
+# --------------------------------------------------------------------------
+st.subheader("🔍 Cleaned Data Preview (After Fixing NaNs & Infs)")
+st.write(data.head())
+
+# Final Check: Stop if DataFrame is Empty After Cleaning
+if data.empty:
+    st.error("⚠️ After cleaning, no valid data remains to plot.")
+    st.stop()
 
 # --------------------------------------------------------------------------
 # Plot Candlestick Chart using mplfinance
@@ -69,7 +93,7 @@ st.write(ohlc.head())
 try:
     st.subheader("📊 Candlestick Chart")
     fig, axlist = mpf.plot(
-        ohlc,  # Use the cleaned DataFrame
+        data,
         type="candle",
         style="yahoo",
         title=f"📊 L’Oréal (OR.PA) from {start_date} to {end_date}",
