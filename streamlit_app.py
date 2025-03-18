@@ -1,33 +1,49 @@
 import streamlit as st
 import yfinance as yf
-import plotly.express as px
-from datetime import datetime, timedelta
+import mplfinance as mpf
+from datetime import date
+from dateutil.relativedelta import relativedelta
 
-# Define the ticker symbols
-tickers = ['MSFT', 'GOOG', 'TSLA', 'NVDA', 'SAN.PA', 'OR.PA']
+# ----------------------------------------------------
+# Streamlit App Title
+# ----------------------------------------------------
+st.title("L’Oréal (OR.PA) - Daily Candlestick Chart")
 
-# Get 10 years of market close data
-end_date = datetime.now()
-start_date = end_date - timedelta(days=365*10)
+# ----------------------------------------------------
+# Set the date range (past 1 year)
+# ----------------------------------------------------
+end_date = date.today()
+start_date = end_date - relativedelta(years=1)
 
-# Retrieve stock data
-data = yf.download(tickers, start=start_date, end=end_date)['Close']
+# ----------------------------------------------------
+# Fetch data from Yahoo Finance
+# ----------------------------------------------------
+with st.spinner("Fetching data..."):
+    data = yf.download("OR.PA", start=start_date, end=end_date, interval="1d")
 
-# Line chart with range selection
-st.title('Stock Performance Analysis')
-st.subheader('10 Year Market Close Data')
-fig = px.line(data, x=data.index, y=tickers)
-fig.update_xaxes(rangeslider_visible=True)
-st.plotly_chart(fig)
-
-# Add buttons for standard yfinance intervals
-intervals = ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max']
-for interval in intervals:
-    st.button(interval)
-
-# Dropdown for candlestick chart
-st.subheader('Candlestick Chart')
-selected_ticker = st.selectbox('Select a ticker', tickers)
-ticker_data = yf.download(selected_ticker, period='1d', interval='1m')
-candlestick = px.line(ticker_data, x=ticker_data.index, y='Close')
-st.plotly_chart(candlestick)
+# ----------------------------------------------------
+# Check if data is retrieved successfully
+# ----------------------------------------------------
+if data.empty:
+    st.error("No data found for L’Oréal (OR.PA). Please try again later.")
+else:
+    st.success(f"Data fetched from {start_date} to {end_date}.")
+    
+    # ----------------------------------------------------
+    # Plot the Candlestick Chart using mplfinance
+    # ----------------------------------------------------
+    fig, axlist = mpf.plot(
+        data,
+        type="candle",
+        style="yahoo",
+        title=f"L’Oréal (OR.PA) - {start_date} to {end_date}",
+        volume=True,
+        mav=(20, 50),  # Moving averages: 20-day & 50-day
+        figsize=(10, 6),
+        returnfig=True
+    )
+    
+    # ----------------------------------------------------
+    # Display the chart in Streamlit
+    # ----------------------------------------------------
+    st.pyplot(fig)
