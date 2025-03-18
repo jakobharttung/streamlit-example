@@ -8,7 +8,7 @@ from dateutil.relativedelta import relativedelta
 # --------------------------------------------------------------------------
 # Streamlit Title
 # --------------------------------------------------------------------------
-st.title("L’Oréal (OR.PA) - Daily Candlestick Chart")
+st.title("📈 L’Oréal (OR.PA) - Daily Candlestick Chart")
 
 # --------------------------------------------------------------------------
 # Define the date range (past year)
@@ -23,39 +23,45 @@ with st.spinner("Fetching L’Oréal (OR.PA) data..."):
     data = yf.download("OR.PA", start=start_date, end=end_date, interval="1d")
 
 # --------------------------------------------------------------------------
-# Check if data is available
+# Debug: Show raw data to verify structure
+# --------------------------------------------------------------------------
+st.subheader("🔍 Data Preview")
+st.write(data.head())  # Show first rows of raw data
+
+# --------------------------------------------------------------------------
+# Validate Data
 # --------------------------------------------------------------------------
 if data.empty:
-    st.error("No data found for L’Oréal (OR.PA). Please try again later.")
+    st.error("❌ No stock data found for L’Oréal (OR.PA). Please try again later.")
 else:
-    # Display success message
-    st.success(f"Data fetched from {start_date} to {end_date}.")
+    st.success(f"✅ Data successfully fetched from {start_date} to {end_date}.")
 
     # ----------------------------------------------------------------------
-    # Debugging: Show first rows to check if columns exist
-    # ----------------------------------------------------------------------
-    st.write("Sample of retrieved data:", data.head())
-
-    # ----------------------------------------------------------------------
-    # Ensure all critical columns exist before conversion
+    # Convert Data to Numeric (Handle Edge Cases)
     # ----------------------------------------------------------------------
     required_columns = ["Open", "High", "Low", "Close", "Adj Close", "Volume"]
+    
+    # Ensure only existing columns are processed
     existing_columns = [col for col in required_columns if col in data.columns]
 
     if not existing_columns:
-        st.error("Critical columns missing in the dataset! Data might be corrupt.")
+        st.error("⚠️ Critical columns missing! Data might be incomplete.")
     else:
-        # Convert only existing columns to numeric
+        # Convert existing columns to numeric
         for col in existing_columns:
             data[col] = pd.to_numeric(data[col], errors="coerce")
 
+        # Debug: Show data types after conversion
+        st.subheader("📊 Data Types After Conversion")
+        st.write(data.dtypes)
+
         # ------------------------------------------------------------------
-        # Drop NaN values
+        # Drop rows with NaN in required columns
         # ------------------------------------------------------------------
         data.dropna(subset=["Open", "High", "Low", "Close", "Volume"], inplace=True)
 
         if data.empty:
-            st.error("After cleaning, no valid data remains to plot.")
+            st.error("⚠️ After cleaning, no valid data remains to plot.")
         else:
             # --------------------------------------------------------------
             # Plot candlestick chart using mplfinance
@@ -64,7 +70,7 @@ else:
                 data,
                 type="candle",
                 style="yahoo",
-                title=f"L’Oréal (OR.PA) from {start_date} to {end_date}",
+                title=f"📊 L’Oréal (OR.PA) from {start_date} to {end_date}",
                 volume=True,
                 mav=(20, 50),  # Moving Averages (20-day, 50-day)
                 figsize=(10, 6),
