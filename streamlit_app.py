@@ -22,42 +22,56 @@ start_date = end_date - relativedelta(years=1)
 with st.spinner("Fetching L’Oréal (OR.PA) data..."):
     data = yf.download("OR.PA", start=start_date, end=end_date, interval="1d")
 
+# --------------------------------------------------------------------------
+# Check if data is available
+# --------------------------------------------------------------------------
 if data.empty:
     st.error("No data found for L’Oréal (OR.PA). Please try again later.")
 else:
-    # Display a success message showing the date range
+    # Display success message
     st.success(f"Data fetched from {start_date} to {end_date}.")
-    
+
     # ----------------------------------------------------------------------
-    # Ensure all critical columns are numeric
+    # Debugging: Show first rows to check if columns exist
     # ----------------------------------------------------------------------
-    for col in ["Open", "High", "Low", "Close", "Adj Close", "Volume"]:
-        if col in data.columns:
-            data[col] = pd.to_numeric(data[col], errors="coerce")
-    
+    st.write("Sample of retrieved data:", data.head())
+
     # ----------------------------------------------------------------------
-    # Drop any rows with NaN in the critical columns
+    # Ensure all critical columns exist before conversion
     # ----------------------------------------------------------------------
-    data.dropna(subset=["Open", "High", "Low", "Close", "Volume"], inplace=True)
-    
-    if data.empty:
-        st.error("After cleaning, no valid data remains to plot.")
+    required_columns = ["Open", "High", "Low", "Close", "Adj Close", "Volume"]
+    existing_columns = [col for col in required_columns if col in data.columns]
+
+    if not existing_columns:
+        st.error("Critical columns missing in the dataset! Data might be corrupt.")
     else:
+        # Convert only existing columns to numeric
+        for col in existing_columns:
+            data[col] = pd.to_numeric(data[col], errors="coerce")
+
         # ------------------------------------------------------------------
-        # Plot candlestick chart using mplfinance
+        # Drop NaN values
         # ------------------------------------------------------------------
-        fig, axlist = mpf.plot(
-            data,
-            type="candle",
-            style="yahoo",
-            title=f"L’Oréal (OR.PA) from {start_date} to {end_date}",
-            volume=True,
-            mav=(20, 50),  # Plot 20-day and 50-day moving averages
-            figsize=(10, 6),
-            returnfig=True
-        )
-        
-        # ------------------------------------------------------------------
-        # Render the chart in Streamlit
-        # ------------------------------------------------------------------
-        st.pyplot(fig)
+        data.dropna(subset=["Open", "High", "Low", "Close", "Volume"], inplace=True)
+
+        if data.empty:
+            st.error("After cleaning, no valid data remains to plot.")
+        else:
+            # --------------------------------------------------------------
+            # Plot candlestick chart using mplfinance
+            # --------------------------------------------------------------
+            fig, axlist = mpf.plot(
+                data,
+                type="candle",
+                style="yahoo",
+                title=f"L’Oréal (OR.PA) from {start_date} to {end_date}",
+                volume=True,
+                mav=(20, 50),  # Moving Averages (20-day, 50-day)
+                figsize=(10, 6),
+                returnfig=True
+            )
+
+            # --------------------------------------------------------------
+            # Render the chart in Streamlit
+            # --------------------------------------------------------------
+            st.pyplot(fig)
