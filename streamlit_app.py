@@ -23,49 +23,58 @@ with st.spinner("Fetching L’Oréal (OR.PA) data..."):
     data = yf.download("OR.PA", start=start_date, end=end_date, interval="1d")
 
 # --------------------------------------------------------------------------
-# Debug: Show raw data to verify structure
+# Debugging: Show raw data preview
 # --------------------------------------------------------------------------
-st.subheader("🔍 Data Preview")
-st.write(data.head())  # Show first rows of raw data
+st.subheader("🔍 Raw Data Preview")
+st.write(data.head())
 
 # --------------------------------------------------------------------------
-# Validate Data
+# Ensure Data is Valid
 # --------------------------------------------------------------------------
 if data.empty:
     st.error("❌ No stock data found for L’Oréal (OR.PA). Please try again later.")
 else:
     st.success(f"✅ Data successfully fetched from {start_date} to {end_date}.")
+    
+    # ----------------------------------------------------------------------
+    # Ensure Data Has a DateTime Index
+    # ----------------------------------------------------------------------
+    if not isinstance(data.index, pd.DatetimeIndex):
+        st.warning("⚠️ Converting index to DateTime format.")
+        data.index = pd.to_datetime(data.index)
 
     # ----------------------------------------------------------------------
-    # Convert Data to Numeric (Handle Edge Cases)
+    # Convert Required Columns to Numeric
     # ----------------------------------------------------------------------
-    required_columns = ["Open", "High", "Low", "Close", "Adj Close", "Volume"]
+    required_columns = ["Open", "High", "Low", "Close", "Volume"]
     
     # Ensure only existing columns are processed
     existing_columns = [col for col in required_columns if col in data.columns]
 
-    if not existing_columns:
-        st.error("⚠️ Critical columns missing! Data might be incomplete.")
+    if len(existing_columns) < len(required_columns):
+        missing_cols = list(set(required_columns) - set(existing_columns))
+        st.error(f"⚠️ Missing columns: {missing_cols}. Data might be incomplete.")
+
+    # Convert only existing columns to numeric
+    for col in existing_columns:
+        data[col] = pd.to_numeric(data[col], errors="coerce")
+
+    # Debug: Show data types after conversion
+    st.subheader("📊 Data Types After Conversion")
+    st.write(data.dtypes)
+
+    # ------------------------------------------------------------------
+    # Drop Rows with Missing Data
+    # ------------------------------------------------------------------
+    data.dropna(subset=required_columns, inplace=True)
+
+    if data.empty:
+        st.error("⚠️ After cleaning, no valid data remains to plot.")
     else:
-        # Convert existing columns to numeric
-        for col in existing_columns:
-            data[col] = pd.to_numeric(data[col], errors="coerce")
-
-        # Debug: Show data types after conversion
-        st.subheader("📊 Data Types After Conversion")
-        st.write(data.dtypes)
-
-        # ------------------------------------------------------------------
-        # Drop rows with NaN in required columns
-        # ------------------------------------------------------------------
-        data.dropna(subset=["Open", "High", "Low", "Close", "Volume"], inplace=True)
-
-        if data.empty:
-            st.error("⚠️ After cleaning, no valid data remains to plot.")
-        else:
-            # --------------------------------------------------------------
-            # Plot candlestick chart using mplfinance
-            # --------------------------------------------------------------
+        # --------------------------------------------------------------
+        # Plot Candlestick Chart using mplfinance
+        # --------------------------------------------------------------
+        try:
             fig, axlist = mpf.plot(
                 data,
                 type="candle",
@@ -76,8 +85,6 @@ else:
                 figsize=(10, 6),
                 returnfig=True
             )
-
-            # --------------------------------------------------------------
-            # Render the chart in Streamlit
-            # --------------------------------------------------------------
             st.pyplot(fig)
+        except Exception as e:
+            st.error(f"❌ mplfinance plotting error: {e}")
