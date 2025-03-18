@@ -8,7 +8,7 @@ from dateutil.relativedelta import relativedelta
 # --------------------------------------------------------------------------
 # Streamlit Title
 # --------------------------------------------------------------------------
-st.title("📈 L’Oréal (OR.PA) - Daily Candlestick Chart")
+st.title("📈 L’Oréal (OR.PA) - Candlestick Chart")
 
 # --------------------------------------------------------------------------
 # Define the date range (past year)
@@ -19,72 +19,70 @@ start_date = end_date - relativedelta(years=1)
 # --------------------------------------------------------------------------
 # Download data from Yahoo Finance
 # --------------------------------------------------------------------------
-with st.spinner("Fetching L’Oréal (OR.PA) data..."):
+st.subheader("Fetching Data from Yahoo Finance...")
+
+with st.spinner("Fetching L’Oréal (OR.PA) stock data..."):
     data = yf.download("OR.PA", start=start_date, end=end_date, interval="1d")
 
 # --------------------------------------------------------------------------
-# Debugging: Show raw data preview
+# Debugging Step 1: Show Raw Data
 # --------------------------------------------------------------------------
 st.subheader("🔍 Raw Data Preview")
 st.write(data.head())
 
 # --------------------------------------------------------------------------
-# Ensure Data is Valid
+# Validate Data
 # --------------------------------------------------------------------------
 if data.empty:
-    st.error("❌ No stock data found for L’Oréal (OR.PA). Please try again later.")
-else:
-    st.success(f"✅ Data successfully fetched from {start_date} to {end_date}.")
-    
-    # ----------------------------------------------------------------------
-    # Ensure Data Has a DateTime Index
-    # ----------------------------------------------------------------------
-    if not isinstance(data.index, pd.DatetimeIndex):
-        st.warning("⚠️ Converting index to DateTime format.")
-        data.index = pd.to_datetime(data.index)
+    st.error("❌ No stock data found for L’Oréal (OR.PA).")
+    st.stop()  # Stop execution here
 
-    # ----------------------------------------------------------------------
-    # Convert Required Columns to Numeric
-    # ----------------------------------------------------------------------
-    required_columns = ["Open", "High", "Low", "Close", "Volume"]
-    
-    # Ensure only existing columns are processed
-    existing_columns = [col for col in required_columns if col in data.columns]
+# --------------------------------------------------------------------------
+# Debugging Step 2: Check Data Types Before Processing
+# --------------------------------------------------------------------------
+st.subheader("📊 Data Types Before Conversion")
+st.write(data.dtypes)
 
-    if len(existing_columns) < len(required_columns):
-        missing_cols = list(set(required_columns) - set(existing_columns))
-        st.error(f"⚠️ Missing columns: {missing_cols}. Data might be incomplete.")
+# Ensure Data Has a DateTime Index
+if not isinstance(data.index, pd.DatetimeIndex):
+    st.warning("⚠️ Converting index to DateTime format.")
+    data.index = pd.to_datetime(data.index)
 
-    # Convert only existing columns to numeric
-    for col in existing_columns:
-        data[col] = pd.to_numeric(data[col], errors="coerce")
+# --------------------------------------------------------------------------
+# Convert Required Columns to Numeric
+# --------------------------------------------------------------------------
+required_columns = ["Open", "High", "Low", "Close", "Volume"]
 
-    # Debug: Show data types after conversion
-    st.subheader("📊 Data Types After Conversion")
-    st.write(data.dtypes)
+# Ensure required columns exist
+missing_columns = [col for col in required_columns if col not in data.columns]
 
-    # ------------------------------------------------------------------
-    # Drop Rows with Missing Data
-    # ------------------------------------------------------------------
-    data.dropna(subset=required_columns, inplace=True)
+if missing_columns:
+    st.error(f"⚠️ Missing columns: {missing_columns}. Data might be incomplete.")
+    st.stop()
 
-    if data.empty:
-        st.error("⚠️ After cleaning, no valid data remains to plot.")
-    else:
-        # --------------------------------------------------------------
-        # Plot Candlestick Chart using mplfinance
-        # --------------------------------------------------------------
-        try:
-            fig, axlist = mpf.plot(
-                data,
-                type="candle",
-                style="yahoo",
-                title=f"📊 L’Oréal (OR.PA) from {start_date} to {end_date}",
-                volume=True,
-                mav=(20, 50),  # Moving Averages (20-day, 50-day)
-                figsize=(10, 6),
-                returnfig=True
-            )
-            st.pyplot(fig)
-        except Exception as e:
-            st.error(f"❌ mplfinance plotting error: {e}")
+# Convert only valid columns
+for col in required_columns:
+    data[col] = pd.to_numeric(data[col], errors="coerce")
+
+# --------------------------------------------------------------------------
+# Debugging Step 3: Show Data Types After Conversion
+# --------------------------------------------------------------------------
+st.subheader("📊 Data Types After Conversion")
+st.write(data.dtypes)
+
+# Drop rows with missing values
+data.dropna(subset=required_columns, inplace=True)
+
+if data.empty:
+    st.error("⚠️ After cleaning, no valid data remains to plot.")
+    st.stop()
+
+# --------------------------------------------------------------------------
+# Debugging Step 4: Show Cleaned Data Before Plotting
+# --------------------------------------------------------------------------
+st.subheader("🔍 Cleaned Data Preview")
+st.write(data.head())
+
+# --------------------------------------------------------------------------
+# Plot Candlestick Chart using mplfinance
+# ----------------------------------------------------------
