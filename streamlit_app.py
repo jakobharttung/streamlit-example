@@ -35,54 +35,49 @@ st.write(data.head())
 # --------------------------------------------------------------------------
 if data.empty:
     st.error("❌ No stock data found for L’Oréal (OR.PA).")
-    st.stop()  # Stop execution here
+    st.stop()
 
 # --------------------------------------------------------------------------
-# Debugging Step 2: Check Data Types Before Processing
+# Ensure Data Has a Proper DateTime Index
 # --------------------------------------------------------------------------
-st.subheader("📊 Data Types Before Conversion")
-st.write(data.dtypes)
-
-# Ensure Data Has a DateTime Index
 if not isinstance(data.index, pd.DatetimeIndex):
     st.warning("⚠️ Converting index to DateTime format.")
     data.index = pd.to_datetime(data.index)
 
 # --------------------------------------------------------------------------
-# Convert Required Columns to Numeric
+# Fix Column Order for mplfinance
 # --------------------------------------------------------------------------
 required_columns = ["Open", "High", "Low", "Close", "Volume"]
 
-# Ensure required columns exist
-missing_columns = [col for col in required_columns if col not in data.columns]
-
-if missing_columns:
-    st.error(f"⚠️ Missing columns: {missing_columns}. Data might be incomplete.")
+# Ensure only required columns exist and are in the correct order
+if not all(col in data.columns for col in required_columns):
+    st.error(f"⚠️ Missing required columns: {set(required_columns) - set(data.columns)}")
     st.stop()
 
-# Convert only valid columns
-for col in required_columns:
-    data[col] = pd.to_numeric(data[col], errors="coerce")
+# Reconstruct the DataFrame explicitly for mplfinance
+ohlc = data[required_columns].copy()  # Ensure it's a new DataFrame
 
 # --------------------------------------------------------------------------
-# Debugging Step 3: Show Data Types After Conversion
-# --------------------------------------------------------------------------
-st.subheader("📊 Data Types After Conversion")
-st.write(data.dtypes)
-
-# Drop rows with missing values
-data.dropna(subset=required_columns, inplace=True)
-
-if data.empty:
-    st.error("⚠️ After cleaning, no valid data remains to plot.")
-    st.stop()
-
-# --------------------------------------------------------------------------
-# Debugging Step 4: Show Cleaned Data Before Plotting
+# Debugging Step 2: Show Cleaned Data Before Plotting
 # --------------------------------------------------------------------------
 st.subheader("🔍 Cleaned Data Preview")
-st.write(data.head())
+st.write(ohlc.head())
 
 # --------------------------------------------------------------------------
 # Plot Candlestick Chart using mplfinance
-# ----------------------------------------------------------
+# --------------------------------------------------------------------------
+try:
+    st.subheader("📊 Candlestick Chart")
+    fig, axlist = mpf.plot(
+        ohlc,  # Use the cleaned DataFrame
+        type="candle",
+        style="yahoo",
+        title=f"📊 L’Oréal (OR.PA) from {start_date} to {end_date}",
+        volume=True,
+        mav=(20, 50),  # Moving Averages (20-day, 50-day)
+        figsize=(10, 6),
+        returnfig=True
+    )
+    st.pyplot(fig)
+except Exception as e:
+    st.error(f"❌ mplfinance plotting error: {e}")
