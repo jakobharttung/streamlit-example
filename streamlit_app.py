@@ -23,7 +23,7 @@ start_date = end_date - relativedelta(years=1)
 st.subheader("Fetching Data from Yahoo Finance...")
 
 with st.spinner("Fetching L’Oréal (OR.PA) stock data..."):
-    data = yf.download("OR.PA", start=start_date, end=end_date, interval="1d")
+    data = yf.download("AAPL", start=start_date, end=end_date, interval="1d")
 
 # --------------------------------------------------------------------------
 # Debugging Step 1: Show Raw Data
